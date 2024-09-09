@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" href="assets/favicon.png" type="image/x-icon">
+
+    <link rel="stylesheet" href="styles.css" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+    <title>Monster Slayer | A Vue.js tutorial</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>
+          Monster Slayer
+        </h1>
+        <small>Vue.js tutorial</small>
+      </header>
+      <main>
+        <div class="health-bars-container">
+          <div class="health-bar-container">
+            <img class="img-player" src="assets/me.svg" />
+            <span class="health">{{selfHealth}}\100</span>
+            <div class="health-bar">
+              <span :style="styleSelfHealthBar"></span>
+            </div>
+          </div>
+          <img id="img-versus" src="assets/versus.svg" alt="versus">
+          <div class="health-bar-container">
+            <img class="img-player" src="assets/monster.svg" />
+            <span class="health">{{monsterHealth}}\100</span>
+            <div class="health-bar">
+              <span :style="styleMonsterHealthBar"></span>
+            </div>
+          </div>
+        </div>
+        <div class="action-center">
+          <div
+            class="new-game"
+            v-if="(!showInGameActionCenter) || anyHealthZeroed"
+          >
+            <button class="flex-center" 
+                @click="startNewGame">
+              <img src="assets/attack.svg" alt="">
+              new game
+            </button>
+          </div>
+          <div class="in-game" v-else>
+            <button class="action-btn" 
+                @click="attackMonster">
+              <img class="img-btn" src="assets//attack.svg" />
+            </button>
+            <button class="action-btn" 
+                :disabled="attackCount < 4" 
+                @click="specialAttackMonster">
+              <img class="img-btn" src="assets//special-attack.svg" />
+            </button>
+            <button class="action-btn" 
+              :disabled="selfHealth > 50 || healCount < 1"
+              @click="healSelf"
+            >
+              <img class="img-btn" src="assets/heal.svg" />
+            </button>
+
+            <button class="action-btn" 
+                @click="surrender">
+              <img class="img-btn" src="assets/exit.svg" />
+            </button>
+          </div>
+        </div>
+        <div class="game-log-container">
+          
+          <div class="header flex-center">
+            
+            <h2>Game log</h2>
+          </div>
+          <div class="game-log">
+            <ul>
+              <li v-for="log in gameLog">
+                <span class="log red" v-if="log.actionTaken == 'attacked'"
+                  >The {{ log.entity }} attacked the Player, dealing {{
+                  log.actionValue }} damage.</span
+                >
+                <span class="log green" v-if="log.actionTaken == 'attack'"
+                  >The {{ log.entity }} attacked the Monster, dealing {{
+                  log.actionValue }} damage.</span
+                >
+                <span
+                  class="log yellow"
+                  v-if="log.actionTaken == 'specialAttack'"
+                  >The {{ log.entity }} launched a Special Attack on the
+                  Monster, dealing {{ log.actionValue }} damage.</span
+                >
+                <span class="log blue" v-if="log.actionTaken == 'heal'"
+                  >The {{ log.entity }} performed a heal, gaining {{
+                  log.actionValue }} health.</span
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="game-stats">
+            <span class="yellow">
+              Special Attacks Used: {{hmSpecialAttacks}}
+            </span>
+            <span class="green"> Total Damage Dealt: {{damageDealt}} </span>
+            <span class="red"> Total Damage Taken: {{damageTaken}} </span>
+            <span class="blue"> Heals Used: {{healsUsed}} </span>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <a href="#" target="_blank">Ahmad Ouabed</a>, © 2024
+      </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
