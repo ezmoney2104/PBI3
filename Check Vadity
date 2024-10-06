@@ -1,0 +1,293 @@
+new code optimized 
+
+checkValidity() {
+  const namePattern = /^[A-Za-z\s]+$/;
+  const agePattern = /^[1-9][0-9]$|^(100)$/;
+  const emailPattern = /^[a-z0-9._-]+@[a-z.-]+\.[a-zA-Z]{2,}$/;
+  const numberPattern = /^(09|\+639)\d{9}$/;
+
+  const validators = {
+    fullname: () => {
+      if (this.formData.fullname.trim() === '' || !namePattern.test(this.formData.fullname)) {
+        return 'Fullname should contain only letters and spaces, and cannot be blank.';
+      }
+      if (this.formData.fullname.length > 45) {
+        return 'Fullname must not exceed 45 characters.';
+      }
+      return null;
+    },
+    nickname: () => {
+      if (this.formData.nickname.trim() === '' || !namePattern.test(this.formData.nickname)) {
+        return 'Nickname should contain only letters and spaces, and cannot be blank.';
+      }
+      if (this.formData.nickname.length > 20) {
+        return 'Nickname must not exceed 20 characters.';
+      }
+      return null;
+    },
+    age: () => {
+      if (!agePattern.test(this.formData.age)) {
+        return 'Invalid age. Must be a number between 10 and 100.';
+      }
+      return null;
+    },
+    birthday: () => {
+      if (this.formData.birthday.trim() === '') {
+        return 'Birthday cannot be blank.';
+      }
+      return null;
+    },
+    email: () => {
+      if (!emailPattern.test(this.formData.email)) {
+        return 'Invalid email format.';
+      }
+      return null;
+    },
+    phonenumber: () => {
+      if (!numberPattern.test(this.formData.phonenumber)) {
+        return 'Invalid phone number format. Ex: 09123456789';
+      }
+      return null;
+    },
+    personality: () => {
+      if (!this.formData.personality) {
+        return 'Please select your personality.';
+      }
+      return null;
+    },
+    gender: () => {
+      if (!this.formData.gender) {
+        return 'Please select your gender.';
+      }
+      return null;
+    },
+    love: () => {
+      if (this.formData.love.length !== 3) {
+        return 'Please pick exactly 3 love languages.';
+      }
+      return null;
+    },
+    motto: () => {
+      if (this.formData.motto.trim() === '') {
+        return 'Please enter your motto.';
+      }
+      return null;
+    },
+  };
+
+  for (let field in validators) {
+    const errorMessage = validators[field]();
+    if (errorMessage) {
+      alert(errorMessage);
+      this.isError = true;
+      return;
+    }
+  }
+
+  this.isError = false;
+}
+
+
+/**
+*end of line
+*
+/
+
+
+Another code 
+
+checkValidity() {
+  // Define validation patterns and limits
+  const patterns = {
+    name: /^[A-Za-z\s]+$/,
+    age: /^[1-9][0-9]$|^(100)$/,
+    email: /^[a-z0-9._-]+@[a-z.-]+\.[a-zA-Z]{2,}$/,
+    phone: /^(09|\+639)\d{9}$/
+  };
+
+  const limits = {
+    fullname: 45,
+    nickname: 20
+  };
+
+  const messages = {
+    fullname: 'Fullname must not exceed 45 characters, must contain only letters, and cannot be blank.',
+    nickname: 'Nickname must not exceed 20 characters, must contain only letters, and cannot be blank.',
+    age: 'Invalid age. Must be between 10 and 100 years old.',
+    birthday: 'Please enter a birthday.',
+    email: 'Invalid email format. Include @ and no special characters.',
+    phone: 'Invalid phone number format. Example: 09123456789.',
+    personality: 'Please select your personality.',
+    gender: 'Please select your gender.',
+    love: 'Pick your top 3 love languages.',
+    motto: 'Please enter your motto.'
+  };
+
+  const formData = this.formData;
+
+  // Generalized validation function
+  const validateField = (field, pattern = null, maxLength = null) => {
+    if (formData[field].trim() === '') {
+      alert(messages[field]);
+      this.isError = true;
+      return false;
+    }
+
+    if (maxLength && formData[field].length > maxLength) {
+      alert(messages[field]);
+      this.isError = true;
+      return false;
+    }
+
+    if (pattern && !pattern.test(formData[field])) {
+      alert(messages[field]);
+      this.isError = true;
+      return false;
+    }
+
+    return true;
+  };
+
+  // Validate individual fields using the generalized function
+  if (!validateField('fullname', patterns.name, limits.fullname)) return;
+  if (!validateField('nickname', patterns.name, limits.nickname)) return;
+  if (!validateField('age', patterns.age)) return;
+  if (!validateField('birthday')) return;
+  if (!validateField('email', patterns.email)) return;
+  if (!validateField('phonenumber', patterns.phone)) return;
+
+  // Validate personality and gender selection
+  if (!formData.personality) {
+    alert(messages.personality);
+    this.isError = true;
+    return;
+  }
+
+  if (!formData.gender) {
+    alert(messages.gender);
+    this.isError = true;
+    return;
+  }
+
+  // Validate love languages (must pick exactly 3)
+  if (formData.love.length !== 3) {
+    alert(messages.love);
+    this.isError = true;
+    return;
+  }
+
+  // Validate motto
+  if (!validateField('motto')) return;
+
+  // If everything is valid, no errors
+  this.isError = false;
+}
+
+
+
+Another onee
+
+checkValidity() {
+  // Define the validation rules and messages for each field
+  const validationSchema = {
+    fullname: {
+      pattern: /^[A-Za-z\s]+$/,
+      maxLength: 45,
+      required: true,
+      message: 'Fullname must be letters only, cannot be blank, and must not exceed 45 characters.'
+    },
+    nickname: {
+      pattern: /^[A-Za-z\s]+$/,
+      maxLength: 20,
+      required: true,
+      message: 'Nickname must be letters only, cannot be blank, and must not exceed 20 characters.'
+    },
+    age: {
+      pattern: /^[1-9][0-9]$|^(100)$/,
+      required: true,
+      message: 'Age must be a valid number between 10 and 100.'
+    },
+    birthday: {
+      required: true,
+      message: 'Please enter your birthday.'
+    },
+    email: {
+      pattern: /^[a-z0-9._-]+@[a-z.-]+\.[a-zA-Z]{2,}$/,
+      required: true,
+      message: 'Invalid email format. Include @ and no special characters.'
+    },
+    phonenumber: {
+      pattern: /^(09|\+639)\d{9}$/,
+      required: true,
+      message: 'Invalid phone number format. Ex: 09123456789.'
+    },
+    personality: {
+      required: true,
+      message: 'Please select your personality.'
+    },
+    gender: {
+      required: true,
+      message: 'Please select your gender.'
+    },
+    love: {
+      custom: () => this.formData.love.length === 3,
+      message: 'Please pick exactly 3 love languages.'
+    },
+    motto: {
+      required: true,
+      message: 'Please enter your motto.'
+    }
+  };
+
+  let isValid = true;
+
+  // Loop through the validation schema and check each field
+  for (const field in validationSchema) {
+    const fieldData = this.formData[field];
+    const { pattern, maxLength, required, custom, message } = validationSchema[field];
+
+    // Check if field is required and not empty
+    if (required && (!fieldData || fieldData.trim() === '')) {
+      alert(message);
+      this.isError = true;
+      isValid = false;
+      break;
+    }
+
+    // Check if the field has a pattern and matches it
+    if (pattern && !pattern.test(fieldData)) {
+      alert(message);
+      this.isError = true;
+      isValid = false;
+      break;
+    }
+
+    // Check if field exceeds maxLength
+    if (maxLength && fieldData.length > maxLength) {
+      alert(message);
+      this.isError = true;
+      isValid = false;
+      break;
+    }
+
+    // Check if there's a custom validation (e.g., for love languages length)
+    if (custom && !custom()) {
+      alert(message);
+      this.isError = true;
+      isValid = false;
+      break;
+    }
+  }
+
+  // If no errors, set isError to false
+  if (isValid) {
+    this.isError = false;
+  }
+}
+
+
+
+another onee
+
+
+
