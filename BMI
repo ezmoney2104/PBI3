@@ -1,0 +1,139 @@
+ Learn with The Complete JavaScript Course 2021: Build Real Projects! Section 2~3 and  Section 5
+
+NOTE: YOU ARE IMPLEMENTING VUEJS not Vanilla JS. Briefly study Vanilla JS.
+
+
+
+        
+      ☐ Challenge: Using the BMI Coverter challenge in Udemy, please create a BMI Comparison between two people. 
+例：(Sample Purpose only. Initial State with no Input) 
+
+
+
+        
+      There should be a title at the top most named "BMI Comparison"
+
+        
+      User should manually input the details needed. (Name, Weight, Height)
+
+        
+      There should be a Compute button that when clicked, it will automatically, compute the BMI of each person. Display computation in console only. 
+例：
+
+
+
+        
+      There should be a Compare button that when clicked, it will show an alert indicating whose BMI is greater along with a read-only card that contains the name, bmi and bmi classification.
+例：
+
+
+
+        
+      When 'x' is clicked in the alert box, the alert and card should be hidden.
+
+        
+      Apply Error handling <Optional/Bonus>
+
+        
+      Each member should have different UI design. Design is up to you.
+
+
+
+        
+      ☐ Applied all the lessons learned in Section 2 ~ 3 
+
+
+
+        
+      ☐ No console errors.
+
+        
+      ☐ Deliverables are being pushed to the git. Confirm by submitting Gitflow Screenshot in wiki
+
+
+Definition Done (完成の定義)
+
+Default: ☐, OK: ✔, NG: ❌, Not applicable: -
+
+Increment's Definition of Done
+
+
+
+Developer
+Code Reviewer
+Product Owner
+Check Items
+
+
+
+
+☐
+☐
+☐
+Submit Summary of Learning
+
+
+☐
+☐
+☐
+There should be a title at the top most named "BMI Comparison"
+
+
+☐
+☐
+☐
+User should manually input the details needed. (Name, Weight, Height)
+
+
+☐
+☐
+☐
+There should be a Compute button that when clicked, it will automatically, compute the BMI of each person. Display computation in console only.
+
+
+☐
+☐
+☐
+There should be a Compare button that when clicked, it will show an alert indicating whose BMI is greater along with a read-only card that contains the name, bmi and bmi classification.
+
+
+☐
+☐
+☐
+When 'x' is clicked in the alert box, the alert and card should be hidden.
+
+
+☐
+☐
+☐
+Each member should have different UI design. Originality
+
+
+☐
+☐
+☐
+Applied all the lessons learned in Section 2 ~ 3
+
+
+☐
+☐
+☐
+Submit Gitflow
+
+
+☐
+☐
+☐
+Usage of reusable components
+
+
+☐
+☐
+☐
+Utilize recipe for code optimization
+
+
+☐
+-
+☐
+Review materials are ready. ※1
