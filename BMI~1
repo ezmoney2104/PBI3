@@ -1,0 +1,134 @@
+<template>
+  <div>
+    <header>
+      <h1>BMI Comparison</h1>
+    </header>
+
+    <b-container>
+      <b-row cols="3" v-for="personId in 2" :key="personId.id">
+        <b-col v-for="(item, id) in items" :key="id">
+          <component
+            :is="item.componentName"
+            :input="item"
+            @formData="addFormData($event, personId)"
+          ></component>
+        </b-col>
+      </b-row>
+
+      <b-row cols="2">
+        <b-col v-for="btn in BMI_BTN" :key="btn.id">
+          <common-button class="button" :input="btn" @change="displayData"></common-button>
+        </b-col>
+        <b-card>{{ bmiCompare }}</b-card>
+      </b-row>
+
+      <ul>
+        <li></li>
+        <li></li>
+        <li></li>
+      </ul>
+    </b-container>
+  </div>
+</template>
+
+<script>
+import { BMI_INPUT } from '@/common/recipe/rTextInputRecipe'
+import CommonTextInput from '@/components/common/CommonTextInput.vue'
+import { BMIBUTTONS } from '@/common/recipe/rButtonRecipe'
+import CommonButton from '@/components/common/CommonButton.vue'
+import { BMITEMPLATE } from '@/common/recipe/rFormRecipe'
+
+export default {
+  name: 'BmiComp',
+  components: {
+    CommonButton,
+    CommonTextInput
+  },
+  data() {
+    return {
+      items: [...BMI_INPUT],
+      BMI_BTN: BMIBUTTONS,
+      bmiData: BMITEMPLATE,
+      weightOne: '',
+      weightTwo: '',
+      heightOne: '',
+      heightTwo: '',
+      bmiOne: 0,
+      bmiTwo: 0,
+      bmiCompare: ''
+    }
+  },
+  methods: {
+    addFormData(data, personId) {
+      if (personId === 1) {
+        this.bmiData.firstPerson[data.key] = data.value
+      } else if (personId === 2) {
+        this.bmiData.secondPerson[data.key] = data.value
+      }
+    },
+
+    bmiCalc() {
+      this.weightOne = parseInt(this.bmiData.firstPerson.weight)
+      this.weightTwo = parseInt(this.bmiData.secondPerson.weight)
+      this.heightOne = parseInt(this.bmiData.firstPerson.height) / 100
+      this.heightTwo = parseInt(this.bmiData.secondPerson.height) / 100
+      this.bmiOne = this.weightOne / (this.heightOne * this.heightOne)
+      this.bmiTwo = this.weightTwo / (this.heightTwo * this.heightTwo)
+
+      const p1 = { ...this.bmiData.firstPerson, BMI: this.bmiOne.toFixed(2) }
+      const p2 = { ...this.bmiData.secondPerson, BMI: this.bmiTwo.toFixed(2) }
+      console.log('Person 1', p1)
+      console.log('Person 2', p2)
+    },
+
+    compareBMI() {
+      if (this.bmiOne > this.bmiTwo) {
+        this.bmiCompare = `${this.bmiData.firstPerson.name} has greater BMI: ${this.bmiOne.toFixed(2)}`
+      } else {
+        this.bmiCompare = `${this.bmiData.secondPerson.name} has greater BMI: ${this.bmiTwo.toFixed(2)}`
+      }
+    },
+
+    displayData(action) {
+      const validation =
+        this.bmiData.firstPerson.name === '' ||
+        this.bmiData.firstPerson.weight === '' ||
+        this.bmiData.firstPerson.height === '' ||
+        this.bmiData.secondPerson.name === '' ||
+        this.bmiData.secondPerson.weight === '' ||
+        this.bmiData.secondPerson.height === ''
+
+      const zeroData = this.bmiOne || this.bmiTwo === 0
+
+      if (validation && action === 'compute') {
+        alert('No Input')
+      } else if (validation && action === 'compare') {
+        alert('No Data to Compare')
+      } else if (action === 'compute') {
+        this.bmiCalc()
+        alert('BMI Computed')
+      } else if (action === 'compare') {
+        if (zeroData) {
+          alert('Press Compute First')
+        } else this.compareBMI()
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+header {
+  padding: 1rem;
+
+  color: rgb(0, 0, 0);
+  text-align: center;
+}
+
+h1 {
+  font-size: 250%;
+}
+.button {
+  padding: 10px;
+}
+</style>
