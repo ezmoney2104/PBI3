@@ -1,0 +1,46 @@
+methods: {
+  classifyBMI(bmi) {
+    if (bmi < 18.5) {
+      return 'Underweight';
+    } else if (bmi >= 18.5 && bmi <= 24.9) {
+      return 'Healthy Weight';
+    } else if (bmi >= 25 && bmi <= 29.9) {
+      return 'Overweight';
+    } else {
+      return 'Obesity';
+    }
+  },
+
+  // Adjust compareBMI method to include classification
+  compareBMI() {
+    const p1Classification = this.classifyBMI(this.bmiOne);
+    const p2Classification = this.classifyBMI(this.bmiTwo);
+
+    // Result for Person 1
+    const p1Result = `${this.bmiData.firstPerson.name}: BMI ${this.bmiOne.toFixed(2)} (${p1Classification})`;
+    
+    // Result for Person 2
+    const p2Result = `${this.bmiData.secondPerson.name}: BMI ${this.bmiTwo.toFixed(2)} (${p2Classification})`;
+
+    // Store the final result for display
+    this.bmiCompare = `${p1Result} vs ${p2Result}`;
+  }
+}
+-----------------------------------
+<b-row cols="2">
+  <b-col v-for="btn in BMI_BTN" :key="btn.id">
+    <common-button class="button" :input="btn" @change="displayData"></common-button>
+  </b-col>
+
+  <b-card v-if="bmiCompare !== ''" class="mt-3">
+    <h5>Comparison Result</h5>
+    <p>{{ bmiCompare }}</p>
+  </b-card>
+</b-row>
+
+
+----------------------------
+<ul v-if="bmiCompare !== ''">
+  <li>{{ bmiCompare }}</li>
+</ul>
+
