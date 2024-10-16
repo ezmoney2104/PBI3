@@ -1,0 +1,181 @@
+Challenge: Create a To Do List themed App.
+   
+        Task actions
+          
+      Convert to task
+     Delete 
+
+ To Do List App: [SAMPLE ONLY]
+
+
+        
+      
+
+        
+      user can add task. If add button is clicked but there is no task added, an error handling should appear.
+
+        
+      Users should be able to add new tasks easily.
+
+        
+      Each added task should be displayed clearly with the task name.
+
+        
+      
+
+        
+      Add Clear Completed task button to delete all COMPLETED task only.
+
+        
+      Add Clear All button to remove ALL task in the page.
+
+        
+      Each added task should have an individual "Delete" button to remove that specific task.
+
+        
+      
+
+        
+      Users should be able to mark tasks as completed.
+
+        
+      Completed tasks should have a visual distinction
+
+        
+      Add Modal Window for FAQ
+
+        
+      UI Design should be different per member.
+
+   
+        Task actions
+          
+      Convert to task
+     Delete 
+
+
+
+        
+      
+ Apply Learnings in udemy:
+
+
+        
+      Looping of Object
+
+        
+      Reduction in using global variables 
+
+        
+      Looping of Array
+
+        
+      Use of Logical operators
+
+        
+      Maps
+
+        
+      Style Binding
+
+   
+        Task actions
+          
+      Convert to task
+     Delete 
+
+        
+      
+ Deliverables are being pushed to the git.   
+        Task actions
+          
+      Convert to task
+     Delete 
+
+
+受入要件
+
+Default: ☐, OK: ✔, NG: ❌, Not applicable: -
+
+Increment's Definition of Done
+
+
+
+Developer
+Code Reviewer
+Product Owner
+Check Items
+
+
+
+
+☐
+☐
+☐
+User can add task. If add button is clicked but there is no task added, an error handling should appear.
+
+
+☐
+☐
+☐
+Add Clear Completed task button to delete all COMPLETED task only
+
+
+☐
+☐
+☐
+Add Clear All button to remove ALL task in the page
+
+
+☐
+☐
+☐
+Added Task should display task name with delete button option.
+
+
+☐
+☐
+☐
+When 'delete' button is clicked, data should be deleted
+
+
+☐
+☐
+☐
+Each member should have different UI design. Originality
+
+
+☐
+☐
+☐
+Users should be able to mark tasks as completed.
+
+
+☐
+☐
+☐
+Add Modal Window for FAQ
+
+
+☐
+☐
+☐
+Submit Gitflow
+
+
+☐
+☐
+☐
+Usage of reusable components
+
+
+☐
+☐
+☐
+Utilize recipe for code optimization
+
+
+☐
+-
+☐
+Review materials are ready. ※1
