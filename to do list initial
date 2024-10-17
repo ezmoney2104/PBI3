@@ -1,0 +1,197 @@
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <header><h1>Keeps</h1></header>
+
+    <div>
+      <b-input-group prepend="Notes" class="mt-3">
+        <b-form-input v-model="userInput" @keyup.enter="addItem"></b-form-input>
+
+        <b-button variant="info" @click="clickAddTask">Add</b-button>
+      </b-input-group>
+    </div>
+
+    <b-row>
+      <b-col v-for="button in buttons" :key="button.id">
+        <component
+          class="py-3"
+          :is="button.componentName"
+          :key="button"
+          :input="button"
+          @change="newFunc"
+        ></component>
+      </b-col>
+    </b-row>
+
+    <div class="todo-table">
+      <div class="table-header">
+        <div class="table-cell">Task</div>
+        <div class="table-cell">Actions</div>
+      </div>
+      <div class="table-body">
+        <div
+          class="table-row"
+          v-for="(item, index) in filteredList"
+          :key="index"
+          :class="{ 'even-row': index % 2 === 0, completed: item.completed }"
+        >
+          <div class="table-cell" :class="{ 'completed-cell': item.completed }">
+            {{ item.value }}
+          </div>
+          <div class="table-cell">
+            <button class="btn btn-primary" @click="toggleCompleted(index)">
+              {{ item.completed ? 'Undo' : 'Complete' }}
+            </button>
+            <button class="btn btn-info" @click="editItem(index)">Edit</button>
+            <button class="btn btn-danger" @click="deleteItem(index)">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </b-container>
+</template>
+
+<script>
+import { TODOBUTTONS } from '@/common/recipe/rButtonRecipe'
+import CommonButton from '@/components/common/CommonButton.vue'
+
+export default {
+  name: 'Todo',
+  components: { CommonButton },
+
+  data() {
+    return {
+      buttons: [...TODOBUTTONS],
+      userInput: '',
+      searchInput: '',
+      list: []
+    }
+  },
+
+  computed: {
+    filteredList() {
+      return this.list.filter((item) =>
+        item.value.toLowerCase().includes(this.searchInput.toLowerCase())
+      )
+    }
+  },
+
+  methods: {
+    addItem() {
+      if (this.userInput.trim() !== '') {
+        const newItem = {
+          id: Math.random(),
+          value: this.userInput.trim(),
+          completed: false
+        }
+        this.list.push(newItem)
+        this.userInput = ''
+      }
+    },
+    deleteItem(index) {
+      this.list.splice(index, 1)
+    },
+    editItem(index) {
+      const editedTodo = prompt('Edit the todo:')
+      if (editedTodo !== null && editedTodo.trim() !== '') {
+        this.list[index].value = editedTodo.trim()
+      }
+    },
+    toggleCompleted(index) {
+      this.list[index].completed = !this.list[index].completed
+    },
+
+    deleteAll() {
+      while (this.list.length > 0) {
+        this.list.pop()
+      }
+    },
+
+    // clearNote(index) {
+    //   if (this.list[index].completed) {
+    //     this.list.pop()
+    //   }
+    // },
+
+    initializeData() {
+      const noInput = this.userInput === ''
+      return noInput
+    },
+    clickAddTask() {
+      if (this.initializeData()) {
+        alert('Please Input a Note')
+      } else if (!this.initializeData()) {
+        this.addItem()
+      }
+    },
+
+    newFunc(action) {
+      if (this.list.length === 0 && action === 'clearAll') {
+        alert('Input first before Deleting')
+      } else if (this.list.length > 0 && action === 'clearAll') {
+        const remove = confirm('Are you sure you want to Clear All?')
+        if (remove) this.deleteAll()
+      }
+
+      //   else if (action === 'clearComp') {
+      //     this.clearNote()
+      //   }
+    }
+  }
+}
+</script>
+
+<style scoped>
+header {
+  background-color: rgb(7, 179, 185);
+  color: white;
+  padding: 10px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+}
+
+/* Todo list styles */
+
+.todo-table {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  background-color: #f0f0f0;
+  padding: 10px;
+}
+
+.table-cell {
+  flex: 1;
+  padding: 10px;
+  font-size: 18px;
+}
+
+.table-body {
+  display: grid;
+}
+
+.table-row {
+  display: flex;
+  border-top: 1px solid #ccc;
+}
+
+.even-row {
+  background-color: #f9f9f9;
+}
+
+.completed {
+  text-decoration: line-through;
+}
+
+.completed-cell {
+  color: #888;
+}
+</style>
