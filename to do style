@@ -1,0 +1,54 @@
+header {
+  background-color: rgb(7, 179, 185);
+  color: white;
+  padding: 10px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* Todo list styles */
+
+.todo-table {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  background-color: #f0f0f0;
+  padding: 10px;
+}
+
+.table-cell {
+  flex: 1;
+  padding: 10px;
+  font-size: 18px;
+}
+
+.table-body {
+  display: grid;
+}
+
+.table-row {
+  display: flex;
+  border-top: 1px solid #ccc;
+}
+
+.even-row {
+  background-color: #f9f9f9;
+}
+
+.completed {
+  text-decoration: line-through;
+  background-color: #f0f0f0; /* Added light gray background */
+}
+
+.completed-cell {
+  color: #888;
+}
+
+.btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
