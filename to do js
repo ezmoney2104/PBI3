@@ -1,0 +1,95 @@
+import { TODOBUTTONS } from '@/common/recipe/rButtonRecipe'
+import CommonButton from '@/components/common/CommonButton.vue'
+
+export default {
+  name: 'Todo',
+  components: { CommonButton },
+
+  data() {
+    return {
+      buttons: [...TODOBUTTONS],
+      userInput: '',
+      searchInput: '',
+      list: []
+    }
+  },
+
+  computed: {
+    filteredList() {
+      return this.list.filter((item) =>
+        item.value.toLowerCase().includes(this.searchInput.toLowerCase())
+      )
+    }
+  },
+
+  methods: {
+    addItem() {
+      if (this.userInput.trim() !== '') {
+        const newItem = {
+          id: Math.random(),
+          value: this.userInput.trim(),
+          completed: false
+        }
+        this.list.push(newItem)
+        this.userInput = ''
+      }
+    },
+    
+    // Confirm deletion of a task
+    confirmDelete(index) {
+      const deleteConfirmation = confirm('Are you sure you want to delete this task?')
+      if (deleteConfirmation) {
+        this.deleteItem(index)
+      }
+    },
+
+    deleteItem(index) {
+      this.list.splice(index, 1)
+    },
+
+    editItem(index) {
+      const editedTodo = prompt('Edit the todo:', this.list[index].value)
+      if (editedTodo !== null && editedTodo.trim() !== '') {
+        this.list[index].value = editedTodo.trim()
+      }
+    },
+
+    toggleCompleted(index) {
+      this.list[index].completed = !this.list[index].completed
+    },
+
+    deleteAll() {
+      while (this.list.length > 0) {
+        this.list.pop()
+      }
+    },
+
+    initializeData() {
+      return this.userInput === ''
+    },
+
+    clickAddTask() {
+      if (this.initializeData()) {
+        alert('Please Input a Note')
+      } else {
+        this.addItem()
+      }
+    },
+
+    // Clear completed tasks method
+    clearCompleted() {
+      this.list = this.list.filter(item => !item.completed)
+    },
+
+    newFunc(action) {
+      if (this.list.length === 0 && action === 'clearAll') {
+        alert('Input first before Deleting')
+      } else if (this.list.length > 0 && action === 'clearAll') {
+        const remove = confirm('Are you sure you want to Clear All?')
+        if (remove) this.deleteAll()
+      } else if (action === 'clearComp') {
+        this.clearCompleted()
+      }
+    }
+  }
+}
