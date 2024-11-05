@@ -1,0 +1,46 @@
+<template>
+  <div>
+    <h2>Register</h2>
+    <form @submit.prevent="registerUser ">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" v-model="username" required />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" v-model="password" required />
+      </div>
+      <button type="submit">Register</button>
+    </form>
+    <p v-if="message">{{ message }}</p>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      username: '',
+      password: '',
+      message: ''
+    }
+  },
+  methods: {
+    registerUser () {
+      if (localStorage.getItem(this.username)) {
+        this.message = 'Username already exists!';
+        return;
+      }
+      const user = { username: this.username, password: this.password };
+      localStorage.setItem(this.username, JSON.stringify(user));
+      this.message = 'User  registered successfully!';
+      this.username = '';
+      this.password = '';
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* Add your styles here */
+</style>
