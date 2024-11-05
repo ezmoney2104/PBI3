@@ -1,0 +1,68 @@
+<template>
+  <div>
+    <h2>Login</h2>
+    <form @submit.prevent="loginUser ">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" v-model="username" required />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" v-model="password" required />
+      </div>
+      <button type="submit">Login</button>
+      <button type="button" @click="deleteUser ">Delete User</button>
+      <button type="button" @click="editPassword">Change Password</button>
+    </form>
+    <p v-if="message">{{ message }}</p>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      username: '',
+      password: '',
+      message: ''
+    }
+  },
+  methods: {
+    loginUser () {
+      const user = JSON.parse(localStorage.getItem(this.username));
+      if (user && user.password === this.password) {
+        this.message = 'Login successful!';
+      } else {
+        this.message = 'Invalid username or password!';
+      }
+    },
+    deleteUser () {
+      if (localStorage.getItem(this.username)) {
+        localStorage.removeItem(this.username);
+        this.message = 'User  deleted successfully!';
+        this.username = '';
+        this.password = '';
+      } else {
+        this.message = 'User  not found!';
+      }
+    },
+    editPassword() {
+      const user = JSON.parse(localStorage.getItem(this.username));
+      if (user) {
+        const newPassword = prompt('Enter new password:');
+        if (newPassword) {
+          user.password = newPassword;
+          localStorage.setItem(this.username, JSON.stringify(user));
+          this.message = 'Password updated successfully!';
+        }
+      } else {
+        this.message = 'User  not found!';
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* Add your styles here */
+</style>
