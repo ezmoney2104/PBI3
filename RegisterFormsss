@@ -62,7 +62,7 @@ export default {
         <input type="submit" value="Register" />
       </div>
       <div class="signup-link">
-        Already a member? <router-link to="/login">Login now</router-link>
+        Already a member? <a @click.prevent="$emit('switch-to-login')">Login now</a>
       </div>
     </form>
     <p v-if="message">{{ message }}</p>
@@ -86,13 +86,13 @@ export default {
       }
       const user = { username: this.username, password: this.password };
       localStorage.setItem(this.username, JSON.stringify(user));
-      this.message = 'Registration successful! Please login to continue.'; // Display success message
-      this.username = '';
-      this.password = '';
+      this.message = 'Registration successful! Please log in.';
+      this.$emit('registration-success'); // Emit event to notify successful registration
     }
   }
 }
 </script>
+
 
 
 <style scoped>
