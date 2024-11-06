@@ -1,0 +1,62 @@
+<template>
+  <nav class="navbar">
+    <h1>My App</h1>
+    <button @click="logout">Logout</button>
+  </nav>
+</template>
+
+<script>
+export default {
+  methods: {
+    logout() {
+      localStorage.removeItem('isAuthenticated');
+      this.$router.push('/login'); // Redirect to login
+      clearTimeout(this.logoutTimer); // Clear the auto logout timer
+    },
+    startLogoutTimer() {
+      // Start a timer for 10 minutes (600,000 ms)
+      this.logoutTimer = setTimeout(() => {
+        this.logout(); // Auto logout after 10 minutes
+      }, 600000);
+    },
+    resetLogoutTimer() {
+      clearTimeout(this.logoutTimer);
+      this.startLogoutTimer();
+    }
+  },
+  mounted() {
+    // Start the auto-logout timer when the component is mounted
+    this.startLogoutTimer();
+
+    // Optionally, reset the timer on user activity
+    window.addEventListener('mousemove', this.resetLogoutTimer);
+    window.addEventListener('keydown', this.resetLogoutTimer);
+  },
+  beforeUnmount() {
+    // Clean up event listeners and timers on component unmount
+    window.removeEventListener('mousemove', this.resetLogoutTimer);
+    window.removeEventListener('keydown', this.resetLogoutTimer);
+    clearTimeout(this.logoutTimer);
+  }
+}
+</script>
+
+<style scoped>
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: #16a085;
+  color: white;
+}
+button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #c0392b;
+}
+</style>
