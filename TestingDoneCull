@@ -1,0 +1,426 @@
+// RegForm.spec.js
+import { shallowMount } from '@vue/test-utils'
+import RegForm from '@/components/regform.vue' // Adjust the import path as necessary
+import { REGFORM } from '@/common/recipe/rLogin'
+
+describe('RegForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegForm)
+    // Clear localStorage before each test
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders the component correctly', () => {
+    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('.title span').text()).toBe(REGFORM.register)
+  })
+
+  it('emits switch-to-login event when clicking the login link', async () => {
+    await wrapper.find('.signup-link a').trigger('click')
+    expect(wrapper.emitted('switch-to-login')).toBeTruthy()
+  })
+
+  it('registers a new user successfully', async () => {
+    wrapper.setData({ username: 'testuser', password: 'password123' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(localStorage.getItem('testuser')).toBeTruthy()
+    const user = JSON.parse(localStorage.getItem('testuser'))
+    expect(user.username).toBe('testuser')
+    expect(user.password).toBe('password123')
+    expect(wrapper.vm.message).toBe('Registration successful! Please log in.')
+    expect(wrapper.emitted('registration-success')).toBeTruthy()
+  })
+
+  it('shows an error message when the username already exists', async () => {
+    // First registration
+    wrapper.setData({ username: 'existinguser', password: 'password123' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    // Attempt to register the same user again
+    wrapper.setData({ username: 'existinguser', password: 'newpassword' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.vm.message).toBe('Username already exists!')
+  })
+
+  it('displays the message when it is set', async () => {
+    wrapper.setData({ message: 'Some message' })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('p').text()).toBe('Some message')
+  })
+
+  it('does not register user if username is empty', async () => {
+    wrapper.setData({ username: '', password: 'password123' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.vm.message).toBe('')
+    expect(localStorage.getItem('')).toBe(null) // No user should be created
+  })
+
+  it('does not register user if password is empty', async () => {
+    wrapper.setData({ username: 'testuser', password: '' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.vm.message).toBe('')
+    expect(localStorage.getItem('testuser')).toBe(null) // No user should be created
+  })
+})
+
+-------------------------------------
+
+// LoginForm.spec.js
+import { shallowMount } from '@vue/test-utils'
+import LoginForm from '@/components/LoginForm.vue' // Adjust the import path as necessary
+
+describe('LoginForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(LoginForm)
+    // Clear localStorage before each test
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders the component correctly', () => {
+    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('.title span').text()).toBe('Login Form')
+    expect(wrapper.find('.signup-link').text()).toContain('Not a member?')
+  })
+
+  it('emits switch-to-register event when clicking the register link', async () => {
+    await wrapper.find('.signup-link a').trigger('click')
+    expect(wrapper.emitted('switch-to-register')).toBeTruthy()
+  })
+
+  it('logs in successfully with valid credentials', async () => {
+    // Set up localStorage with a test user
+    const testUser  = { username: 'testuser', password: 'password123' }
+    localStorage.setItem('testuser', JSON.stringify(testUser ))
+
+    // Set username and password
+    wrapper.setData({ username: 'testuser', password: 'password123' })
+    
+    // Trigger the form submission
+    await wrapper.find('form').trigger('submit.prevent')
+
+    // Check if isAuthenticated is set in localStorage
+    expect(localStorage.getItem('isAuthenticated')).toBe('true')
+    expect(wrapper.emitted('loginDone')).toBeTruthy()
+    expect(wrapper.emitted('loginDone')[0]).toEqual(['testuser'])
+  })
+
+  it('shows an alert for invalid credentials', async () => {
+    // Spy on the alert function
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+    // Attempt to log in with invalid credentials
+    wrapper.setData({ username: 'nonexistentuser', password: 'wrongpassword' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    // Check that alert was called
+    expect(alertSpy).toHaveBeenCalledWith('Invalid username or password!')
+
+    // Restore the original alert function
+    alertSpy.mockRestore()
+  })
+
+  it('does not log in if username is empty', async () => {
+    // Attempt to log in with empty username
+    wrapper.setData({ username: '', password: 'password123' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(localStorage.getItem('isAuthenticated')).toBe(null) // No authentication should occur
+  })
+
+  it('does not log in if password is empty', async () => {
+    // Set up localStorage with a test user
+    const testUser  = { username: 'testuser', password: 'password123' }
+    localStorage.setItem('testuser', JSON.stringify(testUser ))
+
+    // Attempt to log in with empty password
+    wrapper.setData({ username: 'testuser', password: '' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(localStorage.getItem('isAuthenticated')).toBe(null) // No authentication should occur
+  })
+})
+
+
+------------------------------------
+
+
+// App.spec.js
+import { shallowMount } from '@vue/test-utils'
+import App from '@/App.vue' // Adjust the import path as necessary
+import LoginForm from '@/components/pages/Login/LoginForm.vue'
+import RegForm from '@/components/pages/Login/RegForm.vue'
+import CommonNavLink from '@/components/common/CommonNavLink.vue'
+
+describe('App.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    // Clear localStorage before each test
+    localStorage.clear()
+    wrapper = shallowMount(App, {
+      stubs: {
+        LoginForm,
+        RegForm,
+        CommonNavLink,
+        'router-view': true, // Stub router-view
+      }
+    })
+  })
+
+  afterEach(() => {
+    wrapper.destroy()
+  })
+
+  it('renders the component correctly when not authenticated', () => {
+    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('.app').exists()).toBe(true)
+    expect(wrapper.findComponent(LoginForm).exists()).toBe(true)
+  })
+
+  it('renders the component correctly when authenticated', async () => {
+    localStorage.setItem('isAuthenticated', 'true')
+    await wrapper.setData({ isAuthenticated: true }) // Force update
+
+    expect(wrapper.find('b-navbar').exists()).toBe(true)
+    expect(wrapper.find('router-view').exists()).toBe(true)
+  })
+
+  it('calls checkLoginDone method and updates state', async () => {
+    wrapper.vm.checkLoginDone('testuser')
+    expect(wrapper.vm.isAuthenticated).toBe(true)
+    expect(localStorage.getItem('isAuthenticated')).toBe('true')
+    expect(wrapper.vm.username).toBe('testuser')
+    expect(wrapper.vm.showLogin).toBe(false)
+  })
+
+  it('calls deleteUser  method and deletes the user', async () => {
+    const username = 'testuser'
+    const user = { username, password: 'password123' }
+    localStorage.setItem(username, JSON.stringify(user))
+
+    // Mock confirm dialog
+    jest.spyOn(window, 'confirm').mockImplementation(() => true)
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+    wrapper.setData({ username })
+    await wrapper.vm.deleteUser ()
+
+    expect(localStorage.getItem(username)).toBe(null)
+    expect(wrapper.vm.isAuthenticated).toBe(false)
+    expect(wrapper.vm.username).toBe('')
+    expect(localStorage.getItem('isAuthenticated')).toBe('false')
+    expect(alertSpy).toHaveBeenCalledWith('User  deleted successfully!')
+
+    // Restore original alert and confirm
+    alertSpy.mockRestore()
+    window.confirm.mockRestore()
+  })
+
+  it('calls deleteUser  method and shows alert if user not found', async () => {
+    jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+    wrapper.setData({ username: 'nonexistentuser' })
+    await wrapper.vm.deleteUser ()
+
+    expect(window.alert).toHaveBeenCalledWith('User  not found!')
+
+    // Restore original alert
+    window.alert.mockRestore()
+  })
+
+  it('calls editPassword method and updates the password', async () => {
+    const username = 'testuser'
+    const user = { username, password: 'oldpassword' }
+    localStorage.setItem(username, JSON.stringify(user))
+
+    // Mock prompt dialog
+    jest.spyOn(window, 'prompt').mockImplementation(() => 'newpassword')
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+    wrapper.setData({ username })
+    await wrapper.vm.editPassword()
+
+    const updatedUser  = JSON.parse(localStorage.getItem(username))
+    expect(updatedUser .password).toBe('newpassword')
+    expect(alertSpy).toHaveBeenCalledWith('Password updated successfully!')
+
+    // Restore original alert and prompt
+    alertSpy.mockRestore()
+    window.prompt.mockRestore()
+  })
+
+
+--------------------------------------------------
+
+FinalFinal 
+
+
+// App.spec.js
+
+import { shallowMount } from '@vue/test-utils';
+import App from '@/App.vue';
+import CommonNavLink from '@/components/common/CommonNavLink.vue';
+import LoginForm from '@/components/pages/Login/LoginForm.vue';
+import RegForm from '@/components/pages/Login/RegForm.vue';
+
+describe('App.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(App, {
+      stubs: { CommonNavLink, LoginForm, RegForm },
+    });
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    wrapper.destroy();
+  });
+
+  it('renders login form by default if not authenticated', () => {
+    expect(wrapper.findComponent(LoginForm).exists()).toBe(true);
+  });
+
+  it('renders registration form when switching to register', async () => {
+    wrapper.setData({ showLogin: false });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findComponent(RegForm).exists()).toBe(true);
+  });
+
+  it('authenticates user after login and displays navigation bar', async () => {
+    wrapper.vm.checkLoginDone('testUser');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(localStorage.getItem('isAuthenticated')).toBe('true');
+    expect(wrapper.findComponent(LoginForm).exists()).toBe(false);
+  });
+
+  it('logs out user and returns to login screen', async () => {
+    wrapper.setData({ isAuthenticated: true });
+    jest.spyOn(window, 'confirm').mockReturnValueOnce(true);
+    wrapper.vm.logout();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(localStorage.getItem('isAuthenticated')).toBe(null);
+    expect(wrapper.findComponent(LoginForm).exists()).toBe(true);
+  });
+
+  it('deletes user account when confirmed', async () => {
+    wrapper.setData({ username: 'testUser', isAuthenticated: true });
+    localStorage.setItem('testUser', JSON.stringify({ username: 'testUser' }));
+    jest.spyOn(window, 'confirm').mockReturnValueOnce(true);
+    wrapper.vm.deleteUser();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.username).toBe('');
+    expect(localStorage.getItem('testUser')).toBe(null);
+    expect(localStorage.getItem('isAuthenticated')).toBe('false');
+  });
+
+  it('does not delete user account when not confirmed', async () => {
+    wrapper.setData({ username: 'testUser', isAuthenticated: true });
+    localStorage.setItem('testUser', JSON.stringify({ username: 'testUser' }));
+    jest.spyOn(window, 'confirm').mockReturnValueOnce(false);
+    wrapper.vm.deleteUser();
+    await wrapper.vm.$nextTick();
+    expect(localStorage.getItem('testUser')).not.toBe(null);
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+  });
+
+  it('prompts user to edit password and updates localStorage', async () => {
+    wrapper.setData({ username: 'testUser' });
+    localStorage.setItem('testUser', JSON.stringify({ username: 'testUser', password: 'oldPassword' }));
+    jest.spyOn(window, 'prompt').mockReturnValueOnce('newPassword');
+    wrapper.vm.editPassword();
+    await wrapper.vm.$nextTick();
+    const updatedUser = JSON.parse(localStorage.getItem('testUser'));
+    expect(updatedUser.password).toBe('newPassword');
+  });
+
+  it('does not update password if prompt is cancelled', async () => {
+    wrapper.setData({ username: 'testUser' });
+    localStorage.setItem('testUser', JSON.stringify({ username: 'testUser', password: 'oldPassword' }));
+    jest.spyOn(window, 'prompt').mockReturnValueOnce(null);
+    wrapper.vm.editPassword();
+    await wrapper.vm.$nextTick();
+    const unchangedUser = JSON.parse(localStorage.getItem('testUser'));
+    expect(unchangedUser.password).toBe('oldPassword');
+  });
+
+  it('shows alert if user not found for editing password', async () => {
+    wrapper.setData({ username: 'unknownUser' });
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+    wrapper.vm.editPassword();
+    await wrapper.vm.$nextTick();
+    expect(window.alert).toHaveBeenCalledWith('User not found!');
+  });
+
+  it('shows alert if user not found for deletion', async () => {
+    wrapper.setData({ username: 'unknownUser' });
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+    wrapper.vm.deleteUser();
+    await wrapper.vm.$nextTick();
+    expect(window.alert).toHaveBeenCalledWith('User not found!');
+  });
+
+
+
+
+
+it('does not call confirm when there is no user to delete', async () => {
+  wrapper.setData({ username: 'nonExistentUser' });
+  jest.spyOn(window, 'confirm').mockImplementation(() => {});
+  jest.spyOn(window, 'alert').mockImplementation(() => {});
+  wrapper.vm.deleteUser();
+  expect(window.confirm).not.toHaveBeenCalled();
+  expect(window.alert).toHaveBeenCalledWith('User not found!');
+});
+
+it('does not call prompt when there is no user for password edit', async () => {
+  wrapper.setData({ username: 'nonExistentUser' });
+  jest.spyOn(window, 'prompt').mockImplementation(() => {});
+  jest.spyOn(window, 'alert').mockImplementation(() => {});
+  wrapper.vm.editPassword();
+  expect(window.prompt).not.toHaveBeenCalled();
+  expect(window.alert).toHaveBeenCalledWith('User not found!');
+});
+
+it('renders correct navbar when authenticated', async () => {
+  wrapper.setData({ isAuthenticated: true });
+  await wrapper.vm.$nextTick();
+  expect(wrapper.find('.b-navbar').exists()).toBe(true);
+});
+
+it('handles empty username gracefully on login', async () => {
+  wrapper.vm.checkLoginDone('');
+  await wrapper.vm.$nextTick();
+  expect(wrapper.vm.username).toBe('');
+  expect(wrapper.vm.isAuthenticated).toBe(true);
+  expect(localStorage.getItem('isAuthenticated')).toBe('true');
+});
+
+
+
+
+
+
+
+});
+
+
