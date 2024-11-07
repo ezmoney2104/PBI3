@@ -1,0 +1,548 @@
+<template>
+  <div class="wrapper">
+    <div class="title">
+      <span>{{ Label.register }}</span>
+    </div>
+    <form @submit.prevent="registerUser">
+      <div class="row mb-4">
+        <i class="fas fa-user"></i>
+        <input
+          type="text"
+          v-model="username"
+          placeholder="Username"
+          minlength="2"
+          maxlength="20"
+          required
+        />
+      </div>
+      <div class="row mb-4">
+        <i class="fas fa-lock"></i>
+        <input
+          type="password"
+          v-model="password"
+          placeholder="Password"
+          minlength="2"
+          maxlength="20"
+          required
+        />
+      </div>
+      <div class="row button">
+        <input type="submit" value="Register" />
+      </div>
+      <div class="signup-link">
+        {{ Label.member }} <a @click.prevent="$emit('switch-to-login')">{{ Label.loginNow }}</a>
+      </div>
+    </form>
+    <p v-if="message">{{ message }}</p>
+  </div>
+</template>
+
+<script>
+import { REGFORM } from '@/common/recipe/rLogin'
+export default {
+  name: 'RegForm',
+  data() {
+    return {
+      Label: { ...REGFORM },
+      username: '',
+      password: '',
+      message: ''
+    }
+  },
+  methods: {
+    /**
+     * Function to check if user is registered and register user in local storage
+     * @returns {string} - return Username already exists
+     */
+
+    registerUser() {
+      if (localStorage.getItem(this.username)) {
+        this.message = 'Username already exists!'
+        return
+      }
+      const user = { username: this.username, password: this.password }
+      localStorage.setItem(this.username, JSON.stringify(user))
+      this.message = 'Registration successful! Please log in.'
+      this.$emit('registration-success')
+    }
+  }
+}
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 15px;
+  background: #159bf5;
+  overflow: hidden;
+}
+
+.wrapper {
+  max-width: 500px;
+  width: 100%;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.1);
+}
+
+.wrapper .title {
+  height: 120px;
+  background: #16a085;
+  border-radius: 5px 5px 0 0;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrapper form {
+  padding: 25px 35px;
+}
+
+.wrapper form .row {
+  height: 60px;
+
+  position: relative;
+}
+
+.wrapper form .row input {
+  height: 100%;
+  width: 100%;
+  outline: none;
+  padding-left: 70px;
+  border-radius: 5px;
+  border: 1px solid lightgrey;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+form .row input:focus {
+  border-color: #16a085;
+}
+
+form .row input::placeholder {
+  color: #999;
+}
+
+.wrapper form .row i {
+  position: absolute;
+  width: 55px;
+  height: 100%;
+  color: #fff;
+  font-size: 22px;
+  background: #16a085;
+  border: 1px solid #16a085;
+  border-radius: 5px 0 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrapper form .pass {
+  margin-top: 12px;
+}
+
+.wrapper form .pass a {
+  color: #16a085;
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.wrapper form .pass a:hover {
+  text-decoration: underline;
+}
+
+.wrapper form .button input {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 500;
+  padding-left: 0px;
+  background: #16a085;
+  border: 1px solid #16a085;
+  cursor: pointer;
+}
+
+form .button input:hover {
+  background: #16a085;
+}
+
+.wrapper form .signup-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 17px;
+}
+
+.wrapper form .signup-link a {
+  color: #16a085;
+  text-decoration: none;
+}
+
+form .signup-link a:hover {
+  text-decoration: underline;
+}
+</style>
+
+
+------------------------------------------------------------
+
+
+<template>
+  <div class="wrapper">
+    <div class="title">
+      <span>{{ loginLabel }}</span>
+    </div>
+    <form @submit.prevent="loginUser">
+      <div class="row mb-4">
+        <i class="fas fa-user"></i>
+        <input
+          type="text"
+          v-model="username"
+          placeholder="Email or Phone"
+          minlength="2"
+          maxlength="20"
+          required
+        />
+      </div>
+      <div class="row mb-4">
+        <i class="fas fa-lock"></i>
+        <input
+          type="password"
+          v-model="password"
+          placeholder="Password"
+          minlength="2"
+          maxlength="20"
+          required
+        />
+      </div>
+
+      <div class="row button mb-2">
+        <input type="submit" value="Login" />
+      </div>
+
+      <div class="signup-link mb-2">
+        {{ member }} <a @click.prevent="$emit('switch-to-register')">{{ signUpLabel }}</a>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'LoginForm',
+  data() {
+    return {
+      loginLabel: 'Login Form',
+      member: 'Not a member?',
+      signUpLabel: 'Register Now',
+      username: '',
+      password: ''
+    }
+  },
+  methods: {
+    /**
+     * Function to LoginUser depending on user and password
+     */
+
+    loginUser() {
+      const user = JSON.parse(localStorage.getItem(this.username))
+      if (user && user.password === this.password) {
+        localStorage.setItem('isAuthenticated', 'true')
+        this.$emit('loginDone', this.username)
+      } else {
+        alert('Invalid username or password!')
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* Import Google Fonts for styling */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.wrapper {
+  max-width: 500px;
+  width: 100%;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0px 4px 10px 1px rgba(0, 0, 0, 0.1);
+}
+
+.wrapper .title {
+  height: 120px;
+  background: #159bf5;
+  border-radius: 5px 5px 0 0;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrapper form {
+  padding: 25px 35px;
+}
+
+.wrapper form .row {
+  height: 60px;
+
+  position: relative;
+}
+
+.wrapper form .row input {
+  height: 100%;
+  width: 100%;
+  outline: none;
+  padding-left: 70px;
+  border-radius: 5px;
+  border: 1px solid lightgrey;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+form .row input:focus {
+  border-color: #159bf5;
+}
+
+form .row input::placeholder {
+  color: #999;
+}
+
+.wrapper form .row i {
+  position: absolute;
+  width: 55px;
+  height: 100%;
+  color: #fff;
+  font-size: 22px;
+  background: #159bf5;
+  border: 1px solid #159bf5;
+  border-radius: 5px 0 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrapper form .pass {
+  margin-top: 12px;
+}
+
+.wrapper form .pass a {
+  color: #159bf5;
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.wrapper form .pass a:hover {
+  text-decoration: underline;
+}
+
+.wrapper form .button input[type='submit'],
+.wrapper form .button .delete-btn,
+.wrapper form .button .edit-btn {
+  width: 100%;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  background: #159bf5;
+  border: 1px solid #159bf5;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.wrapper form .button .delete-btn {
+  background: #e74c3c;
+}
+
+.wrapper form .button .edit-btn {
+  background: #159bf5;
+}
+
+form .button input[type='submit']:hover {
+  background: #159bf5;
+}
+
+.wrapper form .signup-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 17px;
+}
+
+.wrapper form .signup-link a {
+  color: #159bf5;
+  text-decoration: none;
+}
+
+form .signup-link a:hover {
+  text-decoration: underline;
+}
+</style>
+
+
+----------------------------------------------------------
+
+
+<template>
+  <div class="app">
+    <b-navbar v-if="isAuthenticated" toggleable="lg" type="dark" variant="info" sticky="top">
+      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+      <b-navbar-brand style="font-size: 30px" href="#">{{ TitleNav }}</b-navbar-brand>
+      <b-collapse id="nav-collapse" is-nav>
+        <b-navbar-nav v-for="item in items" :key="item.id">
+          <common-nav-link :is="item.componentName" :key="item.id" :input="item"></common-nav-link>
+        </b-navbar-nav>
+
+        <b-nav-item-dropdown right class="dot">
+          <template #button-content>
+            <em>User</em>
+          </template>
+
+          <b-dropdown-item href="#" @click="editPassword">{{ userLabel.change }}</b-dropdown-item>
+          <b-dropdown-item href="#" @click="deleteUser">{{ userLabel.delete }}</b-dropdown-item>
+          <b-dropdown-item href="#" @click="logout">{{ userLabel.logout }}</b-dropdown-item>
+        </b-nav-item-dropdown>
+      </b-collapse>
+    </b-navbar>
+
+    <router-view v-if="isAuthenticated"></router-view>
+
+    <div
+      v-else-if="!isAuthenticated"
+      class="space d-flex justify-content-center align-items-center"
+    >
+      <login-form
+        v-if="showLogin"
+        @loginDone="checkLoginDone"
+        @switch-to-register="showLogin = false"
+      ></login-form>
+      <reg-form
+        v-else
+        @registration-success="showLogin = true"
+        @switch-to-login="showLogin = true"
+      ></reg-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import { NAVIGATIONPROPERTIES } from './common/recipe/rNavLink'
+import { USER } from './common/recipe/rLogin'
+import CommonNavLink from '@/components/common/CommonNavLink.vue'
+import LoginForm from './components/pages/Login/LoginForm.vue'
+import RegForm from './components/pages/Login/RegForm.vue'
+
+export default {
+  name: 'app',
+  components: { CommonNavLink, LoginForm, RegForm },
+  data() {
+    return {
+      userLabel: { ...USER },
+      items: [...NAVIGATIONPROPERTIES],
+      TitleNav: 'MadsStack',
+      isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
+      showLogin: true,
+      username: ''
+    }
+  },
+  methods: {
+    /**
+     * Fucntion to check the login and assign the username to the emitted username
+     * @param {string} newUsername - to get the emitted username from LoginForm
+     */
+
+    checkLoginDone(newUsername) {
+      this.isAuthenticated = true
+      localStorage.setItem('isAuthenticated', 'true')
+      this.username = newUsername
+      this.showLogin = false
+    },
+
+    /**
+     * Function to delete user based on username
+     */
+
+    deleteUser() {
+      if (localStorage.getItem(this.username)) {
+        const del = confirm('Are you sure to delete your Account?')
+        if (del) {
+          localStorage.removeItem(this.username)
+          alert('User deleted successfully!')
+          this.username = ''
+          this.isAuthenticated = false
+          localStorage.setItem('isAuthenticated', 'false')
+        }
+      } else {
+        alert('User not found!')
+      }
+    },
+
+    /**
+     * Function to edit password of user
+     */
+
+    editPassword() {
+      const user = JSON.parse(localStorage.getItem(this.username))
+      if (user) {
+        const newPassword = prompt('Enter new password:')
+        if (newPassword) {
+          user.password = newPassword
+          localStorage.setItem(this.username, JSON.stringify(user))
+          alert('Password updated successfully!')
+        }
+      } else {
+        alert('User not found!')
+      }
+    },
+
+    /**
+     * Function to logout user
+     */
+    logout() {
+      const remove = confirm('Are you sure to Logout?')
+      if (remove) {
+        this.isAuthenticated = false
+        localStorage.removeItem('isAuthenticated')
+        this.showLogin = true
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+.dot {
+  list-style: none;
+}
+
+.navbar {
+  width: 100%;
+}
+.app {
+  overflow: auto;
+}
+
+.space {
+  height: 100vh;
+}
+</style>
