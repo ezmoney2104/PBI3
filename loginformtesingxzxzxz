@@ -1,0 +1,114 @@
+import { shallowMount } from '@vue/test-utils'
+import LoginForm from '@/components/LoginForm.vue'
+
+describe('LoginForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(LoginForm)
+    jest.spyOn(window, 'alert').mockImplementation(() => {}) // Mocking alert
+    localStorage.clear() // Clear local storage before each test
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('renders correctly with initial state', () => {
+    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
+    expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+    expect(wrapper.find('input[type="submit"]').exists()).toBe(true)
+  })
+
+  test('displays an alert for invalid username or password', async () => {
+    wrapper.setData({ username: 'invalidUser', password: 'wrongpass' })
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(window.alert).toHaveBeenCalledWith('Invalid username or password!')
+  })
+
+  test('logs in successfully with correct credentials', async () => {
+    localStorage.setItem('validUser', JSON.stringify({ username: 'validUser', password: 'correctpass' }))
+    wrapper.setData({ username: 'validUser', password: 'correctpass' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(localStorage.getItem('isAuthenticated')).toBe('true')
+    expect(localStorage.getItem('userLogin')).toBe('validUser')
+    expect(wrapper.emitted('loginDone')).toBeTruthy()
+    expect(wrapper.emitted('loginDone')[0]).toEqual(['validUser'])
+  })
+
+  test('emits switch-to-register event when the signup link is clicked', async () => {
+    await wrapper.find('.signup-link a').trigger('click.prevent')
+    expect(wrapper.emitted('switch-to-register')).toBeTruthy()
+  })
+})
+
+
+--------------------
+
+import { shallowMount } from '@vue/test-utils';
+import LoginForm from '@/path/to/login.txt'; // Adjust the import path accordingly
+
+describe('LoginForm.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(LoginForm);
+    // Mock localStorage
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+      },
+      writable: true,
+    });
+  });
+
+  it('renders the login form correctly', () => {
+    expect(wrapper.find('.title span').text()).toBe('Login Form');
+    expect(wrapper.find('input[type="text"]').attributes('placeholder')).toBe('Email or Phone');
+    expect(wrapper.find('input[type="password"]').attributes('placeholder')).toBe('Password');
+    expect(wrapper.find('input[type="submit"]').attributes('value')).toBe('Login');
+    expect(wrapper.find('.signup-link').text()).toContain('Not a member?');
+  });
+
+  it('calls loginUser  method on form submit', async () => {
+    // Set up a user in localStorage
+    const mockUser  = { password: 'password123' };
+    window.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockUser ));
+
+    // Set the input values
+    await wrapper.setData({ username: 'test@example.com', password: 'password123' });
+
+    // Trigger form submission
+    await wrapper.find('form').trigger('submit.prevent');
+
+    // Check localStorage calls
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('isAuthenticated', 'true');
+    expect(window.localStorage.setItem).toHaveBeenCalledWith('userLogin', 'test@example.com');
+    expect(wrapper.emitted('loginDone')).toBeTruthy();
+    expect(wrapper.emitted('loginDone')[0]).toEqual(['test@example.com']);
+  });
+
+  it('shows an alert for invalid login', async () => {
+    // Set up localStorage to not find the user
+    window.localStorage.getItem.mockReturnValueOnce(null);
+
+    // Set the input values
+    await wrapper.setData({ username: 'invalid@example.com', password: 'wrongpassword' });
+
+    // Mock window.alert
+    window.alert = jest.fn();
+
+    // Trigger form submission
+    await wrapper.find('form').trigger('submit.prevent');
+
+    // Check if alert was called
+    expect(window.alert).toHaveBeenCalledWith('Invalid username or password!');
+  });
+
+  it('emits switch-to-register event when sign up link is clicked', async () => {
+    await wrapper.find('.signup-link a').trigger('click.prevent');
+    expect(wrapper.emitted('switch-to-register')).toBeTruthy();
+  });
+});
