@@ -1,0 +1,116 @@
+import { mount } from '@vue/test-utils'
+import RegForm from '@/components/RegForm.vue' // Adjust the path as necessary
+
+describe('RegForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = mount(RegForm)
+    // Clear localStorage before each test
+    localStorage.clear()
+  })
+
+  it('should register a user successfully', async () => {
+    wrapper.setData({ username: 'testuser', password: 'password' })
+    
+    await wrapper.find('form').trigger('submit.prevent')
+
+    const storedUser  = JSON.parse(localStorage.getItem('testuser'))
+    expect(storedUser ).toEqual({ username: 'testuser', password: 'password' })
+    expect(wrapper.emitted('registration-success')).toBeTruthy()
+  })
+
+  it('should show alert when username already exists', async () => {
+    wrapper.setData({ username: 'testuser', password: 'password' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    // Try to register the same user again
+    wrapper.setData({ username: 'testuser' }) // Same username
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(window.alert).toHaveBeenCalledWith('Username already exists!')
+  })
+
+  it('should show alert for blank input', async () => {
+    wrapper.setData({ username: '', password: '' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(window.alert).toHaveBeenCalledWith('Blank input is NOT allowed and Spaces also is Not Allowed')
+  })
+
+  it('should show alert for spaces in username and password', async () => {
+    wrapper.setData({ username: 'user name', password: 'pass word' })
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(window.alert).toHaveBeenCalledWith('Blank input is NOT allowed and Spaces also is Not Allowed')
+  })
+
+  it('should emit switch-to-login when link is clicked', async () => {
+    await wrapper.find('.signup-link a').trigger('click')
+    expect(wrapper.emitted('switch-to-login')).toBeTruthy()
+  })
+
+  beforeAll(() => {
+    // Mock window.alert
+    window.alert = jest.fn()
+  })
+})
+
+----------------------------
+
+import { shallowMount } from '@vue/test-utils'
+import RegForm from '@/components/RegForm.vue'
+
+describe('RegForm.vue', () => {
+  let wrapper
+
+  beforeEach(() => {
+    wrapper = shallowMount(RegForm)
+    jest.spyOn(window, 'alert').mockImplementation(() => {}) // Mock alert dialog
+    localStorage.clear() // Clear local storage before each test
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('renders correctly with initial state', () => {
+    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
+    expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+    expect(wrapper.find('input[type="submit"]').exists()).toBe(true)
+  })
+
+  test('validates empty username and password', async () => {
+    wrapper.setData({ username: ' ', password: ' ' })
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(window.alert).toHaveBeenCalledWith('Blank input is NOT allowed and Spaces also is Not Allowed')
+  })
+
+  test('validates whitespace in username and password', async () => {
+    wrapper.setData({ username: 'user name', password: 'pass word' })
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(window.alert).toHaveBeenCalledWith('Blank input is NOT allowed and Spaces also is Not Allowed')
+  })
+
+  test('checks for duplicate username in local storage', async () => {
+    localStorage.setItem('existingUser', JSON.stringify({ username: 'existingUser', password: 'password' }))
+    wrapper.setData({ username: 'existingUser', password: 'newpass' })
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(window.alert).toHaveBeenCalledWith('Username already exists!')
+  })
+
+  test('registers a new user successfully', async () => {
+    wrapper.setData({ username: 'newUser', password: 'newpass' })
+    await wrapper.find('form').trigger('submit.prevent')
+    const storedUser = JSON.parse(localStorage.getItem('newUser'))
+    expect(storedUser).toEqual({ username: 'newUser', password: 'newpass' })
+    expect(window.alert).toHaveBeenCalledWith('Registration successful! Please log in.')
+    expect(wrapper.emitted('registration-success')).toBeTruthy()
+  })
+
+  test('emits switch-to-login event when login link is clicked', async () => {
+    await wrapper.find('.signup-link a').trigger('click.prevent')
+    expect(wrapper.emitted('switch-to-login')).toBeTruthy()
+  })
+})
+
