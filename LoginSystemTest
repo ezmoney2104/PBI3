@@ -1,0 +1,332 @@
+<template>
+  <div class="wrapper">
+    <div class="title">
+      <span>{{ Label.register }}</span>
+    </div>
+    <form @submit.prevent="registerUser">
+      <div class="row mb-4">
+        <i class="fas fa-user"></i>
+        <input
+          type="text"
+          v-model="username"
+          placeholder="Username"
+          minlength="2"
+          maxlength="16"
+          required
+        />
+      </div>
+      <div class="row mb-4">
+        <i class="fas fa-lock"></i>
+        <input
+          type="password"
+          v-model="password"
+          placeholder="Password"
+          minlength="2"
+          maxlength="8"
+          required
+        />
+      </div>
+      <div class="row button">
+        <input type="submit" value="Register" />
+      </div>
+      <div class="signup-link">
+        {{ Label.member }} <a @click.prevent="$emit('switch-to-login')">{{ Label.loginNow }}</a>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script>
+import { REGFORM } from '@/common/recipe/rLogin'
+export default {
+  name: 'RegForm',
+  data() {
+    return {
+      Label: { ...REGFORM },
+      username: '',
+      password: ''
+    }
+  },
+  methods: {
+    /**
+     * Function to check if user is registered and register user in local storage
+     * @returns {string} - return Username already exists
+     * @returns {string} - blank input is not allowed
+     */
+
+    registerUser() {
+      const passPatern = /\s/
+      const userNameValid = this.username.trim() === '' || passPatern.test(this.username)
+      const passValid = this.password.trim() === '' || passPatern.test(this.password)
+
+      if (localStorage.getItem(this.username)) {
+        alert('Username already exists!')
+        return
+      }
+
+      if (userNameValid || passValid) {
+        alert('Blank input is NOT allowed and Spaces also is Not Allowed')
+
+        return
+      }
+
+      const user = { username: this.username, password: this.password }
+      localStorage.setItem(this.username, JSON.stringify(user))
+      alert('Registration successful! Please log in.')
+      this.$emit('registration-success')
+    }
+  }
+}
+</script>
+
+
+--------------------------------------
+
+<template>
+  <div class="wrapper">
+    <div class="title">
+      <span>{{ loginLabel }}</span>
+    </div>
+    <form @submit.prevent="loginUser">
+      <div class="row mb-4">
+        <i class="fas fa-user"></i>
+        <input
+          type="text"
+          v-model="username"
+          placeholder="Email or Phone"
+          minlength="2"
+          maxlength="20"
+          required
+        />
+      </div>
+      <div class="row mb-4">
+        <i class="fas fa-lock"></i>
+        <input
+          type="password"
+          v-model="password"
+          placeholder="Password"
+          minlength="2"
+          maxlength="20"
+          required
+        />
+      </div>
+
+      <div class="row button mb-2">
+        <input type="submit" value="Login" />
+      </div>
+
+      <div class="signup-link mb-2">
+        {{ member }} <a @click.prevent="$emit('switch-to-register')">{{ signUpLabel }}</a>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'LoginForm',
+  data() {
+    return {
+      loginLabel: 'Login Form',
+      member: 'Not a member?',
+      signUpLabel: 'Register Now',
+      username: '',
+      password: ''
+    }
+  },
+  methods: {
+    /**
+     * Function to LoginUser depending on user and password
+     */
+
+    loginUser() {
+      const user = JSON.parse(localStorage.getItem(this.username))
+      if (user && user.password === this.password) {
+        localStorage.setItem('isAuthenticated', 'true')
+        localStorage.setItem('userLogin', this.username)
+        this.$emit('loginDone', this.username)
+      } else {
+        alert('Invalid username or password!')
+      }
+    }
+  }
+}
+</script>
+
+
+--------------------------
+
+
+<template>
+  <div class="app">
+    <b-navbar v-if="isAuthenticated" toggleable="lg" type="dark" variant="info" sticky="top">
+      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+      <b-navbar-brand style="font-size: 30px" href="#">{{ TitleNav }}</b-navbar-brand>
+      <b-collapse id="nav-collapse" is-nav>
+        <b-navbar-nav v-for="item in items" :key="item.id">
+          <common-nav-link :is="item.componentName" :key="item.id" :input="item"></common-nav-link>
+        </b-navbar-nav>
+
+        <b-navbar toggleable="lg">
+          <b-navbar-nav class="ms-auto">
+            <b-nav-item-dropdown class="dot">
+              <template #button-content>
+                <em>User</em>
+              </template>
+
+              <b-dropdown-item href="#" @click="editPassword">{{
+                userLabel.change
+              }}</b-dropdown-item>
+              <b-dropdown-item href="#" @click="deleteUser">{{ userLabel.delete }}</b-dropdown-item>
+              <b-dropdown-item href="#" @click="logout">{{ userLabel.logout }}</b-dropdown-item>
+            </b-nav-item-dropdown>
+          </b-navbar-nav>
+        </b-navbar>
+      </b-collapse>
+    </b-navbar>
+
+    <router-view v-if="isAuthenticated"></router-view>
+
+    <div
+      v-else-if="!isAuthenticated"
+      class="space d-flex justify-content-center align-items-center"
+    >
+      <login-form
+        v-if="showLogin"
+        @loginDone="checkLoginDone"
+        @switch-to-register="showLogin = false"
+      ></login-form>
+      <reg-form
+        v-else
+        @registration-success="showLogin = true"
+        @switch-to-login="showLogin = true"
+      ></reg-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import { NAVIGATIONPROPERTIES } from './common/recipe/rNavLink'
+import { USER } from './common/recipe/rLogin'
+import CommonNavLink from '@/components/common/CommonNavLink.vue'
+import LoginForm from './components/pages/Login/LoginForm.vue'
+import RegForm from './components/pages/Login/RegForm.vue'
+
+export default {
+  name: 'app',
+  components: { CommonNavLink, LoginForm, RegForm },
+  data() {
+    return {
+      userLabel: { ...USER },
+      items: [...NAVIGATIONPROPERTIES],
+      TitleNav: 'MadsStack',
+      isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
+      showLogin: true,
+      username: ''
+    }
+  },
+
+  mounted() {
+    if (!this.isAuthenticated) {
+      this.$router.push({ name: 'home' })
+    }
+  },
+
+  /**
+   * Created property to run the isAuthenticated to true even when page is refreshed
+   */
+
+  created() {
+    const authenticate = JSON.parse(localStorage.getItem('isAuthenticated'))
+    const login = localStorage.getItem('userLogin')
+    if (authenticate && login) {
+      this.isAuthenticated = true
+      this.username = login
+    }
+  },
+
+  methods: {
+    /**
+     * Fucntion to check the login and assign the username to the emitted username
+     * @param {string} newUsername - to get the emitted username from LoginForm
+     */
+
+    checkLoginDone(newUsername) {
+      this.isAuthenticated = true
+      localStorage.setItem('isAuthenticated', 'true')
+      this.username = newUsername
+
+      this.showLogin = false
+    },
+
+    /**
+     * Function to delete user based on username
+     */
+
+    deleteUser() {
+      const user = JSON.parse(localStorage.getItem(this.username))
+
+      if (user) {
+        const pass = prompt('Enter your current password')
+        if (pass === user.password) {
+          const del = confirm('Are you sure to delete your Account?')
+          if (del) {
+            localStorage.removeItem(this.username)
+            alert('User deleted successfully!')
+            this.username = ''
+            this.isAuthenticated = false
+            this.showLogin = true
+            localStorage.setItem('isAuthenticated', 'false')
+            this.$router.push({ name: 'home' })
+          }
+        } else {
+          alert('Wrong Password, Enter Correct one to delete')
+        }
+      }
+    },
+
+    /**
+     * Function to edit password of user
+     */
+
+    editPassword() {
+      const user = JSON.parse(localStorage.getItem(this.username))
+
+      if (user) {
+        const newPassword = prompt('Enter new password:')
+        const maxPass = newPassword?.length >= 2 && newPassword?.length <= 8
+        const spacing = newPassword?.trim() === ''
+        const passPattern = /\s/
+
+        if (maxPass && !spacing && !passPattern.test(newPassword)) {
+          user.password = newPassword
+          localStorage.setItem(this.username, JSON.stringify(user))
+
+          alert('Password updated successfully! Kindly Login Again')
+          localStorage.setItem('isAuthenticated', 'false')
+          this.$router.push({ name: 'home' })
+          this.isAuthenticated = false
+          this.showLogin = true
+        } else {
+          alert('Enter Proper Pass')
+        }
+      } else {
+        alert('User not found!')
+      }
+    },
+
+    /**
+     * Function to logout user
+     */
+    logout() {
+      const remove = confirm('Are you sure to Logout?')
+      if (remove) {
+        this.isAuthenticated = false
+        localStorage.removeItem('isAuthenticated')
+        this.showLogin = true
+        this.$router.push({ name: 'home' })
+      }
+    }
+  }
+}
+</script>
