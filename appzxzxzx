@@ -1,0 +1,99 @@
+import { shallowMount } from '@vue/test-utils';
+import App from '@/path/to/app.vue'; // Adjust the path as needed
+
+describe('App.vue', () => {
+  let wrapper;
+  const mockRouter = {
+    push: jest.fn(),
+  };
+
+  beforeEach(() => {
+    // Set up localStorage mock
+    localStorage.setItem('isAuthenticated', 'false');
+    wrapper = shallowMount(App, {
+      mocks: {
+        $router: mockRouter,
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    wrapper.destroy();
+  });
+
+  it('renders navbar if authenticated', () => {
+    localStorage.setItem('isAuthenticated', 'true');
+    wrapper = shallowMount(App);
+    expect(wrapper.find('b-navbar').exists()).toBe(true);
+  });
+
+  it('redirects to home on mount if not authenticated', () => {
+    expect(mockRouter.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+
+  it('authenticates and sets username on checkLoginDone', () => {
+    wrapper.vm.checkLoginDone('testUser');
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(wrapper.vm.username).toBe('testUser');
+    expect(wrapper.vm.showLogin).toBe(false);
+  });
+
+  it('deletes user if password matches', () => {
+    wrapper.setData({ username: 'testUser' });
+    localStorage.setItem('testUser', JSON.stringify({ password: '1234' }));
+    window.prompt = jest.fn().mockReturnValue('1234');
+    window.confirm = jest.fn().mockReturnValue(true);
+    window.alert = jest.fn();
+
+    wrapper.vm.deleteUser();
+    expect(localStorage.getItem('testUser')).toBeNull();
+    expect(window.alert).toHaveBeenCalledWith('User deleted successfully!');
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(mockRouter.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+
+  it('does not delete user if password is incorrect', () => {
+    wrapper.setData({ username: 'testUser' });
+    localStorage.setItem('testUser', JSON.stringify({ password: '1234' }));
+    window.prompt = jest.fn().mockReturnValue('wrong');
+    window.alert = jest.fn();
+
+    wrapper.vm.deleteUser();
+    expect(window.alert).toHaveBeenCalledWith('Wrong Password, Enter Correct one to delete');
+  });
+
+  it('edits password if new password meets requirements', () => {
+    wrapper.setData({ username: 'testUser' });
+    localStorage.setItem('testUser', JSON.stringify({ password: '1234' }));
+    window.prompt = jest.fn().mockReturnValue('newPass');
+    window.alert = jest.fn();
+
+    wrapper.vm.editPassword();
+    expect(localStorage.getItem('testUser')).toContain('newPass');
+    expect(window.alert).toHaveBeenCalledWith('Password updated successfully! Kindly Login Again');
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(mockRouter.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+
+  it('shows error if new password does not meet requirements', () => {
+    wrapper.setData({ username: 'testUser' });
+    localStorage.setItem('testUser', JSON.stringify({ password: '1234' }));
+    window.prompt = jest.fn().mockReturnValue(' ');
+    window.alert = jest.fn();
+
+    wrapper.vm.editPassword();
+    expect(window.alert).toHaveBeenCalledWith('Enter Proper Pass');
+  });
+
+  it('logs out user', () => {
+    window.confirm = jest.fn().mockReturnValue(true);
+    wrapper.vm.logout();
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(localStorage.getItem('isAuthenticated')).toBeNull();
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(mockRouter.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+});
