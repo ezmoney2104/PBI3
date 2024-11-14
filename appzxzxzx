@@ -295,3 +295,256 @@ export default {
 }
 </style>
 
+--------------------------
+
+
+import { shallowMount } from '@vue/test-utils';
+import App from '@/App.vue';
+
+describe('App.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(App, {
+      stubs: ['b-navbar', 'b-navbar-brand', 'b-navbar-toggle', 'b-collapse', 
+              'b-navbar-nav', 'b-nav-item-dropdown', 'b-dropdown-item', 
+              'login-form', 'reg-form', 'router-view', 'common-nav-link'],
+    });
+    localStorage.clear();
+  });
+
+  test('should initialize with default data', () => {
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(wrapper.vm.username).toBe('');
+    expect(wrapper.vm.TitleNav).toBe('MadsStack');
+  });
+
+  test('should start login phase correctly', () => {
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userLogin', 'testUser');
+    wrapper.vm.startLoginPhase();
+
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(wrapper.vm.username).toBe('testUser');
+  });
+
+  test('should redirect to home if not authenticated', () => {
+    const pushMock = jest.fn();
+    wrapper.vm.$router = { push: pushMock };
+
+    wrapper.vm.startLoginPhase();
+
+    expect(pushMock).toHaveBeenCalledWith({ name: 'home' });
+  });
+
+  test('should check login and update username', () => {
+    wrapper.vm.checkLoginDone('newUser');
+
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(localStorage.getItem('isAuthenticated')).toBe('true');
+    expect(wrapper.vm.username).toBe('newUser');
+    expect(wrapper.vm.showLogin).toBe(false);
+  });
+
+  test('should delete user correctly', () => {
+    const mockUser = { password: '1234' };
+    localStorage.setItem('testUser', JSON.stringify(mockUser));
+    localStorage.setItem('isAuthenticated', 'true');
+    wrapper.vm.username = 'testUser';
+
+    jest.spyOn(window, 'prompt').mockImplementation(() => '1234');
+    jest.spyOn(window, 'confirm').mockImplementation(() => true);
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+    wrapper.vm.deleteUser();
+
+    expect(localStorage.getItem('testUser')).toBe(null);
+    expect(localStorage.getItem('isAuthenticated')).toBe('false');
+    expect(wrapper.vm.username).toBe('');
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+  });
+
+  test('should fail to delete user with wrong password', () => {
+    const mockUser = { password: '1234' };
+    localStorage.setItem('testUser', JSON.stringify(mockUser));
+    wrapper.vm.username = 'testUser';
+
+    jest.spyOn(window, 'prompt').mockImplementation(() => 'wrongPass');
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+    wrapper.vm.deleteUser();
+
+    expect(localStorage.getItem('testUser')).not.toBe(null);
+  });
+
+  test('should edit user password correctly', () => {
+    const mockUser = { password: '1234' };
+    localStorage.setItem('testUser', JSON.stringify(mockUser));
+    wrapper.vm.username = 'testUser';
+
+    jest.spyOn(window, 'prompt').mockImplementation(() => 'newPass');
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+    wrapper.vm.editPassword();
+
+    const updatedUser = JSON.parse(localStorage.getItem('testUser'));
+    expect(updatedUser.password).toBe('newPass');
+    expect(localStorage.getItem('isAuthenticated')).toBe('false');
+  });
+
+  test('should not update password with invalid input', () => {
+    const mockUser = { password: '1234' };
+    localStorage.setItem('testUser', JSON.stringify(mockUser));
+    wrapper.vm.username = 'testUser';
+
+    jest.spyOn(window, 'prompt').mockImplementation(() => '   ');
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+    wrapper.vm.editPassword();
+
+    const updatedUser = JSON.parse(localStorage.getItem('testUser'));
+    expect(updatedUser.password).toBe('1234');
+  });
+
+  test('should log out user correctly', () => {
+    localStorage.setItem('isAuthenticated', 'true');
+    wrapper.vm.isAuthenticated = true;
+
+    jest.spyOn(window, 'confirm').mockImplementation(() => true);
+
+    wrapper.vm.logout();
+
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(localStorage.getItem('isAuthenticated')).toBe(null);
+  });
+
+  test('should not log out if user cancels', () => {
+    localStorage.setItem('isAuthenticated', 'true');
+    wrapper.vm.isAuthenticated = true;
+
+    jest.spyOn(window, 'confirm').mockImplementation(() => false);
+
+    wrapper.vm.logout();
+
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(localStorage.getItem('isAuthenticated')).toBe('true');
+  });
+});
+
+
+-----------------------------
+
+import { shallowMount } from '@vue/test-utils'
+import App from './app.vue'  // Adjust the import path as necessary
+
+describe('App.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(App, {
+      data() {
+        return {
+          username: 'testUser ',
+          isAuthenticated: false,
+          showLogin: true,
+        }
+      },
+      mocks: {
+        $router: {
+          push: jest.fn(),
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('calls startLoginPhase and sets isAuthenticated to true if user is logged in', () => {
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userLogin', 'testUser ');
+    wrapper.vm.startLoginPhase();
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(wrapper.vm.username).toBe('testUser ');
+  });
+
+  it('calls checkLoginDone and sets isAuthenticated to true', () => {
+    wrapper.vm.checkLoginDone('newUser ');
+    expect(wrapper.vm.isAuthenticated).toBe(true);
+    expect(wrapper.vm.username).toBe('newUser ');
+    expect(wrapper.vm.showLogin).toBe(false);
+    expect(localStorage.getItem('isAuthenticated')).toBe('true');
+  });
+
+  it('deletes user if the correct password is entered', () => {
+    const user = { password: 'password123' };
+    localStorage.setItem('testUser ', JSON.stringify(user));
+    wrapper.vm.username = 'testUser ';
+    
+    global.prompt = jest.fn(() => 'password123');
+    global.confirm = jest.fn(() => true);
+    
+    wrapper.vm.deleteUser ();
+    
+    expect(localStorage.getItem('testUser ')).toBe(null);
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(wrapper.vm.username).toBe('');
+    expect(wrapper.vm.$router.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+
+  it('does not delete user if the wrong password is entered', () => {
+    const user = { password: 'password123' };
+    localStorage.setItem('testUser ', JSON.stringify(user));
+    wrapper.vm.username = 'testUser ';
+    
+    global.prompt = jest.fn(() => 'wrongPassword');
+    
+    wrapper.vm.deleteUser ();
+    
+    expect(localStorage.getItem('testUser ')).toBe(JSON.stringify(user));
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+  });
+
+  it('edits password if the new password is valid', () => {
+    const user = { password: 'oldPassword' };
+    localStorage.setItem('testUser ', JSON.stringify(user));
+    wrapper.vm.username = 'testUser ';
+    
+    global.prompt = jest.fn(() => 'newPass');
+    
+    wrapper.vm.editPassword();
+    
+    expect(localStorage.getItem('testUser ')).toBe(JSON.stringify({ password: 'newPass' }));
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(wrapper.vm.$router.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+
+  it('does not edit password if the new password is invalid', () => {
+    const user = { password: 'oldPassword' };
+    localStorage.setItem('testUser ', JSON.stringify(user));
+    wrapper.vm.username = 'testUser ';
+    
+    global.prompt = jest.fn(() => ''); // Invalid password
+    
+    wrapper.vm.editPassword();
+    
+    expect(localStorage.getItem('testUser ')).toBe(JSON.stringify(user));
+  });
+
+  it('logs out the user', () => {
+    global.confirm = jest.fn(() => true);
+    
+    wrapper.vm.logout();
+    
+    expect(wrapper.vm.isAuthenticated).toBe(false);
+    expect(wrapper.vm.showLogin).toBe(true);
+    expect(localStorage.getItem('isAuthenticated')).toBe(null);
+    expect(wrapper.vm.$router.push).toHaveBeenCalledWith({ name: 'home' });
+  });
+});
