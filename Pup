@@ -1,0 +1,156 @@
+app.vue 
+
+<template>
+  <div>
+    <h1>Puppy Blog</h1>
+    <nav>
+      <button @click="currentPage = 'home'">Home</button>
+      <button @click="currentPage = 'register'">Register Puppy</button>
+      <button @click="currentPage = 'list'">View Puppies</button>
+    </nav>
+    <div>
+      <Home v-if="currentPage === 'home'" />
+      <PuppyRegistration v-if="currentPage === 'register'" @puppyAdded="addPuppy" />
+      <PuppyList v-if="currentPage === 'list'" :puppies="puppies" @deletePuppy="deletePuppy" @adoptPuppy="adoptPuppy" />
+    </div>
+  </div>
+</template>
+
+<script>
+import Home from './components/Home.vue';
+import PuppyRegistration from './components/PuppyRegistration.vue';
+import PuppyList from './components/PuppyList.vue';
+
+export default {
+  components: { Home, PuppyRegistration, PuppyList },
+  data() {
+    return {
+      currentPage: 'home',
+      puppies: []
+    };
+  },
+  methods: {
+    addPuppy(puppy) {
+      this.puppies.push({ ...puppy, id: Date.now(), owner: null });
+    },
+    deletePuppy(id) {
+      this.puppies = this.puppies.filter((puppy) => puppy.id !== id);
+    },
+    adoptPuppy(id) {
+      const ownerName = prompt('Enter Owner Name:');
+      this.puppies = this.puppies.map((puppy) =>
+        puppy.id === id ? { ...puppy, owner: ownerName } : puppy
+      );
+    }
+  }
+};
+</script>
+
+<style>
+nav button {
+  margin-right: 10px;
+}
+</style>
+
+
+-------------------------------
+
+
+home component 
+
+
+<template>
+  <div>
+    <h2>Welcome to Puppy Blog</h2>
+    <p>Manage and adopt your favorite puppies!</p>
+  </div>
+</template>
+
+
+-------------------
+
+<template>
+  <div>
+    <h2>Register a Puppy</h2>
+    <form @submit.prevent="submitForm">
+      <input v-model="name" placeholder="Name" required />
+      <input v-model="breed" placeholder="Breed" required />
+      <input v-model.number="age" placeholder="Age" type="number" required />
+      <button type="submit">Register</button>
+    </form>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      name: '',
+      breed: '',
+      age: null
+    };
+  },
+  methods: {
+    submitForm() {
+      const newPuppy = { name: this.name, breed: this.breed, age: this.age };
+      this.$emit('puppyAdded', newPuppy);
+      this.name = '';
+      this.breed = '';
+      this.age = null;
+    }
+  }
+};
+</script>
+
+
+---------------
+
+
+<template>
+  <div>
+    <h2>Puppy List</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Breed</th>
+          <th>Age</th>
+          <th>Owner</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="puppy in puppies" :key="puppy.id">
+          <td>{{ puppy.name }}</td>
+          <td>{{ puppy.breed }}</td>
+          <td>{{ puppy.age }}</td>
+          <td>{{ puppy.owner || 'No Owner' }}</td>
+          <td>
+            <button @click="$emit('deletePuppy', puppy.id)">Delete</button>
+            <button @click="$emit('adoptPuppy', puppy.id)">Adopt</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+export default {
+  props: {
+    puppies: {
+      type: Array,
+      required: true
+    }
+  }
+};
+</script>
+
+
+
+How It Works
+Home: A simple welcome page.
+Register Puppy: Adds a puppy to the list with name, breed, and age.
+View Puppies: Displays all puppies in a table with delete and adopt buttons.
+Delete: Removes the puppy from the list.
+Adopt: Allows assigning an owner name to the puppy.
