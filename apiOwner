@@ -1,0 +1,155 @@
+from flask import Blueprint, request
+
+
+# Import db
+from src.setup_db_example.models.m_owner_model import OwnerModel
+from src.setup_db_example.database import db
+import traceback
+
+# Add routing
+owner_api_router = Blueprint("owner_api", __name__)
+
+
+# Add routing name for api method
+@owner_api_router.route("/api/get-sample", methods=["GET"])
+def sample_read():
+
+    return {
+        "message": "sample",
+    }
+
+
+@owner_api_router.route("/api/post-owner", methods=["POST"])
+def register_owner():
+
+    req = request.json["params"]
+    try:
+        name = req["ownerName"]
+        contact = req["ownerContact"]
+        address = req["ownerAddress"]
+        new_data = OwnerModel(
+            owner_name=name, owner_contact=contact, owner_address=address
+        )
+        db.session.add(new_data)
+        db.session.commit()
+        return {
+            "success": True,
+            "message_response": "OWNER SUCCESSFULLY ADDED",
+            "message_content": "Owner Added",
+        }, 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return {
+            "success": False,
+            "message_response": "OWNER ADD FAILED",
+            "message_content": "Adding Failed",
+        }, 200
+
+------------------------
+
+
+API Request
+
+import axios from 'axios'
+import { API_BASE_URL } from '@/environment.js'
+/**
+ * Initialization of all API Requests.
+ */
+export class FetchAPI {
+  /**
+   * Send get request
+   * @param {String} uri - uri of the database
+   * @param {*} id
+   * @return {Object} response.data - the response from the backend
+   */
+  async get(uri) {
+    let response
+    try {
+      console.log(API_BASE_URL + uri)
+      response = await axios.get(API_BASE_URL + uri)
+    } catch (error) {
+      response = {
+        data: {
+          success: false,
+          message_response: 'DAWMS-NG',
+          message_content: error.message
+        }
+      }
+    }
+    return response.data
+  }
+  /**
+   * Send put request
+   * @param {String} uri - uri of the database
+   * @param {String} data - data to be updated to the database
+   * @param{Number} good - non defective product
+   * @return {Object} response.data - the response from the backend
+   */
+  async put(uri, data) {
+    let response
+    try {
+      response = await axios.put(API_BASE_URL + uri, {
+        params: data
+      })
+    } catch (error) {
+      response = {
+        data: {
+          success: false,
+          message_response: 'DAWMS-NG',
+          message_content: error.message
+        }
+      }
+    }
+    return response.data
+  }
+  /**
+   * Send put request
+   * @param {String} uri - uri of the database
+   * @param {String} data - data to be posted to the database
+   * @return {Object} response.data - the response from the backend
+   */
+  async post(uri, data) {
+    let response
+    try {
+      response = await axios.post(API_BASE_URL + uri, {
+        params: data
+      })
+    } catch (error) {
+      response = {
+        data: {
+          success: false,
+          message_response: 'DAWMS-NG',
+          message_content: error.message
+        }
+      }
+    }
+    return response.data
+  }
+  /**
+   * Send put request
+   * @param {String} uri - uri of the database
+   * @param {Object} data - id to be reffered to the database
+   * @return {Object} response.data - the response from the backend
+   */
+  async delete(uri, data) {
+    let response
+    try {
+      response = await axios.delete(API_BASE_URL + uri, {
+        params: data
+      })
+    } catch (error) {
+      response = {
+        data: {
+          success: false,
+          message_response: 'DAWMS-NG',
+          message_content: error.message
+        }
+      }
+    }
+    return response.data
+  }
+}
+
+
+
+
