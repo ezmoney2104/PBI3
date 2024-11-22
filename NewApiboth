@@ -1,0 +1,265 @@
+puppy api
+
+from flask import Blueprint, request, jsonify
+from src.setup_db_example.models.m_puppy_model import PuppyModel
+from src.setup_db_example.models.m_owner_model import OwnerModel
+from src.setup_db_example.database import db
+import traceback
+
+puppy_api_router = Blueprint("puppy_api", __name__)
+
+# Helper function to validate puppy data
+def validate_puppy_data(data):
+    required_fields = ["name", "breed", "age"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return False, f"Field '{field}' is required and cannot be null."
+    if not isinstance(data["age"], int) or data["age"] < 0:
+        return False, "Field 'age' must be a positive integer."
+    if "ownerId" in data and data["ownerId"]:
+        if not OwnerModel.query.get(data["ownerId"]):
+            return False, f"Owner with ID {data['ownerId']} does not exist."
+    return True, "Valid data."
+
+
+@puppy_api_router.route("/api/get-puppies", methods=["GET"])
+def get_puppies():
+    try:
+        puppies = PuppyModel.query.all()
+        return jsonify([puppy.to_dict() for puppy in puppies])
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to fetch puppies"}), 500
+
+
+@puppy_api_router.route("/api/post-puppy", methods=["POST"])
+def register_puppy():
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_puppy_data(req)
+        if not is_valid:
+            return jsonify({"success": False, "message": message}), 400
+
+        new_puppy = PuppyModel(
+            name=req["name"],
+            breed=req["breed"],
+            age=req["age"],
+            adopted=False,
+            owner_id=req.get("ownerId")
+        )
+        db.session.add(new_puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy added successfully"}), 201
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to add puppy"}), 500
+
+
+@puppy_api_router.route("/api/delete-puppy/<int:puppy_id>", methods=["DELETE"])
+def delete_puppy(puppy_id):
+    try:
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        db.session.delete(puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy deleted successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to delete puppy"}), 500
+
+
+@puppy_api_router.route("/api/update-puppy/<int:puppy_id>", methods=["PUT"])
+def update_puppy(puppy_id):
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_puppy_data(req)
+        if not is_valid:
+            return jsonify({"success": False, "message": message}), 400
+
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        puppy.name = req["name"]
+        puppy.breed = req["breed"]
+        puppy.age = req["age"]
+        puppy.adopted = req.get("adopted", puppy.adopted)  # Keep existing if not provided
+        puppy.owner_id = req.get("ownerId", puppy.owner_id)  # Assign or keep existing owner
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy updated successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to update puppy"}), 500
+
+
+new API 
+
+owner_api_router = Blueprint("owner_api", __name__)
+
+# Helper function to validate owner data
+def validate_owner_data(data):
+    required_fields = ["ownerName", "ownerContact", "ownerAddress"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return False, f"Field '{field}' is required and cannot be null."
+    return True, "Valid data."
+
+
+@owner_api_router.route("/api/get-owners", methods=["GET"])
+def get_owners():
+    try:
+        owners = OwnerModel.query.all()
+        return jsonify([owner.to_dict() for owner in owners])
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to fetch owners"}), 500
+
+
+@owner_api_router.route("/api/post-owner", methods=["POST"])
+def register_owner():
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_owner_data(req)
+        if not is_valid:
+            return jsonify({"success": False, "message": message}), 400
+
+        new_owner = OwnerModel(
+            owner_name=req["ownerName"],
+            owner_contact=req["ownerContact"],
+            owner_address=req["ownerAddress"]
+        )
+        db.session.add(new_owner)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Owner added successfully"}), 201
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to add owner"}), 500
+
+
+@owner_api_router.route("/api/delete-owner/<int:owner_id>", methods=["DELETE"])
+def delete_owner(owner_id):
+    try:
+        owner = OwnerModel.query.get_or_404(owner_id)
+        db.session.delete(owner)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Owner deleted successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to delete owner"}), 500
+
+
+@owner_api_router.route("/api/update-owner/<int:owner_id>", methods=["PUT"])
+def update_owner(owner_id):
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_owner_data(req)
+        if not is_valid:
+            return jsonify({"success": False, "message": message}), 400
+
+        owner = OwnerModel.query.get_or_404(owner_id)
+        owner.owner_name = req["ownerName"]
+        owner.owner_contact = req["ownerContact"]
+        owner.owner_address = req["ownerAddress"]
+        db.session.commit()
+        return jsonify({"success": True, "message": "Owner updated successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to update owner"}), 500
+
+
+apiii puppy
+
+puppy_api_router = Blueprint("puppy_api", __name__)
+
+# Helper function to validate puppy data
+def validate_puppy_data(data):
+    required_fields = ["name", "breed", "age"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return False, f"Field '{field}' is required and cannot be null."
+    if not isinstance(data["age"], int) or data["age"] < 0:
+        return False, "Field 'age' must be a positive integer."
+    if "ownerId" in data and data["ownerId"]:
+        if not OwnerModel.query.get(data["ownerId"]):
+            return False, f"Owner with ID {data['ownerId']} does not exist."
+    return True, "Valid data."
+
+
+@puppy_api_router.route("/api/get-puppies", methods=["GET"])
+def get_puppies():
+    try:
+        puppies = PuppyModel.query.all()
+        return jsonify([puppy.to_dict() for puppy in puppies])
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to fetch puppies"}), 500
+
+
+@puppy_api_router.route("/api/post-puppy", methods=["POST"])
+def register_puppy():
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_puppy_data(req)
+        if not is_valid:
+            return jsonify({"success": False, "message": message}), 400
+
+        new_puppy = PuppyModel(
+            name=req["name"],
+            breed=req["breed"],
+            age=req["age"],
+            adopted=False,
+            owner_id=req.get("ownerId")
+        )
+        db.session.add(new_puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy added successfully"}), 201
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to add puppy"}), 500
+
+
+@puppy_api_router.route("/api/delete-puppy/<int:puppy_id>", methods=["DELETE"])
+def delete_puppy(puppy_id):
+    try:
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        db.session.delete(puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy deleted successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to delete puppy"}), 500
+
+
+@puppy_api_router.route("/api/update-puppy/<int:puppy_id>", methods=["PUT"])
+def update_puppy(puppy_id):
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_puppy_data(req)
+        if not is_valid:
+            return jsonify({"success": False, "message": message}), 400
+
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        puppy.name = req["name"]
+        puppy.breed = req["breed"]
+        puppy.age = req["age"]
+        puppy.adopted = req.get("adopted", puppy.adopted)  # Keep existing if not provided
+        puppy.owner_id = req.get("ownerId", puppy.owner_id)  # Assign or keep existing owner
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy updated successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to update puppy"}), 500
+
+----
+
+from flask import Flask
+from src.routes.owner_api import owner_api_router
+from src.routes.puppy_api import puppy_api_router
+
+app = Flask(__name__)
+
+# Register API Blueprints
+app.register_blueprint(owner_api_router)
+app.register_blueprint(puppy_api_router)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
