@@ -1,0 +1,241 @@
+owner api
+from flask import Blueprint, request, jsonify
+from src.setup_db_example.models.m_owner_model import OwnerModel
+from src.setup_db_example.database import db
+import traceback
+
+owner_api_router = Blueprint("owner_api", __name__)
+
+@owner_api_router.route("/api/get-owners", methods=["GET"])
+def get_owners():
+    try:
+        owners = OwnerModel.query.all()
+        return jsonify([owner.to_dict() for owner in owners])
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to fetch owners"}), 500
+
+
+@owner_api_router.route("/api/post-owner", methods=["POST"])
+def register_owner():
+    try:
+        req = request.json["params"]
+        name = req["ownerName"]
+        contact = req["ownerContact"]
+        address = req["ownerAddress"]
+        new_owner = OwnerModel(owner_name=name, owner_contact=contact, owner_address=address)
+        db.session.add(new_owner)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Owner added successfully"}), 201
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to add owner"}), 500
+
+
+@owner_api_router.route("/api/delete-owner/<int:owner_id>", methods=["DELETE"])
+def delete_owner(owner_id):
+    try:
+        owner = OwnerModel.query.get_or_404(owner_id)
+        db.session.delete(owner)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Owner deleted successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to delete owner"}), 500
+
+
+@owner_api_router.route("/api/update-owner/<int:owner_id>", methods=["PUT"])
+def update_owner(owner_id):
+    try:
+        req = request.json["params"]
+        owner = OwnerModel.query.get_or_404(owner_id)
+        owner.owner_name = req["ownerName"]
+        owner.owner_contact = req["ownerContact"]
+        owner.owner_address = req["ownerAddress"]
+        db.session.commit()
+        return jsonify({"success": True, "message": "Owner updated successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to update owner"}), 500
+
+------
+owner app.vur
+
+<template>
+  <div>
+    <h1>Owner Management</h1>
+    <OwnerForm @ownerAdded="fetchOwners" />
+    <OwnerList :owners="owners" @ownerDeleted="fetchOwners" @ownerUpdated="fetchOwners" />
+  </div>
+</template>
+
+<script>
+import OwnerForm from "./components/OwnerForm.vue";
+import OwnerList from "./components/OwnerList.vue";
+import { FetchAPI } from "./FetchAPI";
+
+export default {
+  components: { OwnerForm, OwnerList },
+  data() {
+    return { owners: [] };
+  },
+  methods: {
+    async fetchOwners() {
+      const api = new FetchAPI();
+      this.owners = await api.get("/api/get-owners");
+    }
+  },
+  mounted() {
+    this.fetchOwners();
+  }
+};
+</script>
+
+
+-----
+
+owner.vue
+
+<template>
+  <div>
+    <h2>Add Owner</h2>
+    <form @submit.prevent="addOwner">
+      <input v-model="name" placeholder="Name" required />
+      <input v-model="contact" placeholder="Contact" required />
+      <input v-model="address" placeholder="Address" required />
+      <button type="submit">Add</button>
+    </form>
+  </div>
+</template>
+
+<script>
+import { FetchAPI } from "../FetchAPI";
+
+export default {
+  data() {
+    return { name: "", contact: "", address: "" };
+  },
+  methods: {
+    async addOwner() {
+      const api = new FetchAPI();
+      await api.post("/api/post-owner", {
+        ownerName: this.name,
+        ownerContact: this.contact,
+        ownerAddress: this.address
+      });
+      this.$emit("ownerAdded");
+      this.name = "";
+      this.contact = "";
+      this.address = "";
+    }
+  }
+};
+</script>
+
+
+owner list
+
+<template>
+  <div>
+    <h2>Owners</h2>
+    <ul>
+      <li v-for="owner in owners" :key="owner.id">
+        {{ owner.ownerName }} - {{ owner.ownerContact }} - {{ owner.ownerAddress }}
+        <button @click="deleteOwner(owner.id)">Delete</button>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script>
+import { FetchAPI } from "../FetchAPI";
+
+export default {
+  props: ["owners"],
+  methods: {
+    async deleteOwner(id) {
+      const api = new FetchAPI();
+      await api.delete(`/api/delete-owner/${id}`);
+      this.$emit("ownerDeleted");
+    }
+  }
+};
+</script>
+
+
+
+---
+
+puppy api
+
+from flask import Blueprint, request, jsonify
+from src.setup_db_example.models.m_puppy_model import PuppyModel
+from src.setup_db_example.database import db
+import traceback
+
+puppy_api_router = Blueprint("puppy_api", __name__)
+
+@puppy_api_router.route("/api/get-puppies", methods=["GET"])
+def get_puppies():
+    try:
+        puppies = PuppyModel.query.all()
+        return jsonify([puppy.to_dict() for puppy in puppies])
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to fetch puppies"}), 500
+
+
+@puppy_api_router.route("/api/post-puppy", methods=["POST"])
+def register_puppy():
+    try:
+        req = request.json["params"]
+        new_puppy = PuppyModel(
+            name=req["name"],
+            breed=req["breed"],
+            age=req["age"],
+            adopted=False
+        )
+        db.session.add(new_puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy added successfully"}), 201
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to add puppy"}), 500
+
+
+@puppy_api_router.route("/api/delete-puppy/<int:puppy_id>", methods=["DELETE"])
+def delete_puppy(puppy_id):
+    try:
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        db.session.delete(puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy deleted successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to delete puppy"}), 500
+
+
+@puppy_api_router.route("/api/update-puppy/<int:puppy_id>", methods=["PUT"])
+def update_puppy(puppy_id):
+    try:
+        req = request.json["params"]
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        puppy.name = req["name"]
+        puppy.breed = req["breed"]
+        puppy.age = req["age"]
+        puppy.adopted = req["adopted"]
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy updated successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to update puppy"}), 500
+
+
+
+
+app
+
+
+
+
+
