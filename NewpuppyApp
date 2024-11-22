@@ -1,0 +1,576 @@
+import { createRouter, createWebHistory } from "vue-router";
+import Home from "@/views/Home.vue";
+import ManagePuppies from "@/views/ManagePuppies.vue";
+import ManageOwners from "@/views/ManageOwners.vue";
+
+const routes = [
+  { path: "/", name: "Home", component: Home },
+  { path: "/puppies", name: "ManagePuppies", component: ManagePuppies },
+  { path: "/owners", name: "ManageOwners", component: ManageOwners },
+];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+export default router;
+
+------
+<template>
+  <div>
+    <nav>
+      <router-link to="/">Home</router-link> |
+      <router-link to="/puppies">Manage Puppies</router-link> |
+      <router-link to="/owners">Manage Owners</router-link>
+    </nav>
+    <router-view></router-view>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "App",
+};
+</script>
+
+<style>
+nav {
+  margin-bottom: 20px;
+}
+nav a {
+  margin: 0 10px;
+  text-decoration: none;
+  color: #007bff;
+}
+nav a:hover {
+  text-decoration: underline;
+}
+</style>
+
+
+-----
+
+<template>
+  <div>
+    <h1>Welcome to the Puppy Management App</h1>
+    <p>Manage puppies and their owners with ease.</p>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "Home",
+};
+</script>
+
+
+-----
+
+ManagePuppies.vue
+
+<template>
+  <div>
+    <h2>Manage Puppies</h2>
+    <PuppyForm @puppyAdded="fetchPuppies" />
+    <PuppyList :puppies="puppies" @puppyDeleted="fetchPuppies" />
+  </div>
+</template>
+
+<script>
+import PuppyForm from "@/components/PuppyForm.vue";
+import PuppyList from "@/components/PuppyList.vue";
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "ManagePuppies",
+  components: { PuppyForm, PuppyList },
+  data() {
+    return {
+      puppies: [],
+    };
+  },
+  methods: {
+    async fetchPuppies() {
+      const api = new FetchAPI();
+      const response = await api.get("/api/get-puppies");
+      this.puppies = response;
+    },
+  },
+  mounted() {
+    this.fetchPuppies();
+  },
+};
+</script>
+
+-----
+ManageOwners.vue
+
+<template>
+  <div>
+    <h2>Manage Owners</h2>
+    <OwnerForm @ownerAdded="fetchOwners" />
+    <OwnerList :owners="owners" @ownerDeleted="fetchOwners" />
+  </div>
+</template>
+
+<script>
+import OwnerForm from "@/components/OwnerForm.vue";
+import OwnerList from "@/components/OwnerList.vue";
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "ManageOwners",
+  components: { OwnerForm, OwnerList },
+  data() {
+    return {
+      owners: [],
+    };
+  },
+  methods: {
+    async fetchOwners() {
+      const api = new FetchAPI();
+      const response = await api.get("/api/get-owners");
+      this.owners = response;
+    },
+  },
+  mounted() {
+    this.fetchOwners();
+  },
+};
+</script>
+
+
+-----
+
+PuppyForm
+
+<template>
+  <form @submit.prevent="addPuppy">
+    <div>
+      <label>Name:</label>
+      <input v-model="puppy.name" required />
+    </div>
+    <div>
+      <label>Breed:</label>
+      <input v-model="puppy.breed" required />
+    </div>
+    <div>
+      <label>Age:</label>
+      <input v-model.number="puppy.age" type="number" required />
+    </div>
+    <div>
+      <label>Owner ID (optional):</label>
+      <input v-model.number="puppy.ownerId" type="number" />
+    </div>
+    <button type="submit">Add Puppy</button>
+  </form>
+</template>
+
+<script>
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "PuppyForm",
+  data() {
+    return {
+      puppy: {
+        name: "",
+        breed: "",
+        age: 0,
+        ownerId: null,
+      },
+    };
+  },
+  methods: {
+    async addPuppy() {
+      const api = new FetchAPI();
+      const response = await api.post("/api/post-puppy", this.puppy);
+      if (response.success) {
+        this.$emit("puppyAdded");
+        this.puppy = { name: "", breed: "", age: 0, ownerId: null };
+      }
+    },
+  },
+};
+</script>
+
+-----
+
+PuppyList
+
+<template>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Breed</th>
+        <th>Age</th>
+        <th>Adopted</th>
+        <th>Owner</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="puppy in puppies" :key="puppy.id">
+        <td>{{ puppy.name }}</td>
+        <td>{{ puppy.breed }}</td>
+        <td>{{ puppy.age }}</td>
+        <td>{{ puppy.adopted ? "Yes" : "No" }}</td>
+        <td>{{ puppy.owner_id || "None" }}</td>
+        <td>
+          <button @click="deletePuppy(puppy.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</template>
+
+<script>
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "PuppyList",
+  props: ["puppies"],
+  methods: {
+    async deletePuppy(id) {
+      const api = new FetchAPI();
+      const response = await api.delete(`/api/delete-puppy/${id}`);
+      if (response.success) {
+        this.$emit("puppyDeleted");
+      }
+    },
+  },
+};
+</script>
+
+
+---
+
+OwnerForm
+
+<template>
+  <form @submit.prevent="addOwner">
+    <div>
+      <label>Name:</label>
+      <input v-model="owner.name" required />
+    </div>
+    <div>
+      <label>Contact:</label>
+      <input v-model="owner.contact" required />
+    </div>
+    <div>
+      <label>Address:</label>
+      <input v-model="owner.address" required />
+    </div>
+    <button type="submit">Add Owner</button>
+  </form>
+</template>
+
+<script>
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "OwnerForm",
+  data() {
+    return {
+      owner: {
+        name: "",
+        contact: "",
+        address: "",
+      },
+    };
+  },
+  methods: {
+    async addOwner() {
+      const api = new FetchAPI();
+      const response = await api.post("/api/post-owner", this.owner);
+      if (response.success) {
+        this.$emit("ownerAdded");
+        this.owner = { name: "", contact: "", address: "" };
+      }
+    },
+  },
+};
+</script>
+
+<style scoped>
+form {
+  margin-bottom: 20px;
+}
+form div {
+  margin-bottom: 10px;
+}
+</style>
+
+
+-----
+
+<template>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Contact</th>
+        <th>Address</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="owner in owners" :key="owner.id">
+        <td>{{ owner.id }}</td>
+        <td>{{ owner.name }}</td>
+        <td>{{ owner.contact }}</td>
+        <td>{{ owner.address }}</td>
+        <td>
+          <button @click="deleteOwner(owner.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</template>
+
+<script>
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "OwnerList",
+  props: ["owners"],
+  methods: {
+    async deleteOwner(id) {
+      const api = new FetchAPI();
+      const response = await api.delete(`/api/delete-owner/${id}`);
+      if (response.success) {
+        this.$emit("ownerDeleted");
+      }
+    },
+  },
+};
+</script>
+
+<style scoped>
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+th {
+  background-color: #f2f2f2;
+}
+</style>
+
+-----
+
+ManageOwners.vue
+
+<template>
+  <div>
+    <h2>Manage Owners</h2>
+    <OwnerForm @ownerAdded="fetchOwners" />
+    <OwnerList :owners="owners" @ownerDeleted="fetchOwners" />
+  </div>
+</template>
+
+<script>
+import OwnerForm from "@/components/OwnerForm.vue";
+import OwnerList from "@/components/OwnerList.vue";
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "ManageOwners",
+  components: { OwnerForm, OwnerList },
+  data() {
+    return {
+      owners: [],
+    };
+  },
+  methods: {
+    async fetchOwners() {
+      const api = new FetchAPI();
+      const response = await api.get("/api/get-owners");
+      this.owners = response;
+    },
+  },
+  mounted() {
+    this.fetchOwners();
+  },
+};
+</script>
+
+
+----
+summary
+
+
+Below are the components for OwnerForm.vue and OwnerList.vue, which allow you to add, view, and delete owners.
+
+OwnerForm.vue
+
+This component is for adding a new owner.
+
+<template>
+  <form @submit.prevent="addOwner">
+    <div>
+      <label>Name:</label>
+      <input v-model="owner.name" required />
+    </div>
+    <div>
+      <label>Contact:</label>
+      <input v-model="owner.contact" required />
+    </div>
+    <div>
+      <label>Address:</label>
+      <input v-model="owner.address" required />
+    </div>
+    <button type="submit">Add Owner</button>
+  </form>
+</template>
+
+<script>
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "OwnerForm",
+  data() {
+    return {
+      owner: {
+        name: "",
+        contact: "",
+        address: "",
+      },
+    };
+  },
+  methods: {
+    async addOwner() {
+      const api = new FetchAPI();
+      const response = await api.post("/api/post-owner", this.owner);
+      if (response.success) {
+        this.$emit("ownerAdded");
+        this.owner = { name: "", contact: "", address: "" };
+      }
+    },
+  },
+};
+</script>
+
+<style scoped>
+form {
+  margin-bottom: 20px;
+}
+form div {
+  margin-bottom: 10px;
+}
+</style>
+
+OwnerList.vue
+
+This component displays the list of owners and allows you to delete them.
+
+<template>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Contact</th>
+        <th>Address</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="owner in owners" :key="owner.id">
+        <td>{{ owner.id }}</td>
+        <td>{{ owner.name }}</td>
+        <td>{{ owner.contact }}</td>
+        <td>{{ owner.address }}</td>
+        <td>
+          <button @click="deleteOwner(owner.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</template>
+
+<script>
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "OwnerList",
+  props: ["owners"],
+  methods: {
+    async deleteOwner(id) {
+      const api = new FetchAPI();
+      const response = await api.delete(`/api/delete-owner/${id}`);
+      if (response.success) {
+        this.$emit("ownerDeleted");
+      }
+    },
+  },
+};
+</script>
+
+<style scoped>
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+th {
+  background-color: #f2f2f2;
+}
+</style>
+
+Owner Management Flow
+
+1. Integrating Owner Management into ManageOwners.vue
+
+Update the ManageOwners.vue view to use the OwnerForm.vue and OwnerList.vue components.
+
+<template>
+  <div>
+    <h2>Manage Owners</h2>
+    <OwnerForm @ownerAdded="fetchOwners" />
+    <OwnerList :owners="owners" @ownerDeleted="fetchOwners" />
+  </div>
+</template>
+
+<script>
+import OwnerForm from "@/components/OwnerForm.vue";
+import OwnerList from "@/components/OwnerList.vue";
+import { FetchAPI } from "@/api/FetchAPI";
+
+export default {
+  name: "ManageOwners",
+  components: { OwnerForm, OwnerList },
+  data() {
+    return {
+      owners: [],
+    };
+  },
+  methods: {
+    async fetchOwners() {
+      const api = new FetchAPI();
+      const response = await api.get("/api/get-owners");
+      this.owners = response;
+    },
+  },
+  mounted() {
+    this.fetchOwners();
+  },
+};
+</script>
+
+Summary of Features
+
+	1.	OwnerForm.vue: A form for adding a new owner with fields for name, contact, and address.
+	2.	OwnerList.vue: A table displaying all owners with a delete button for each row.
+	3.	ManageOwners.vue: The main view to handle owner management, combining the form and list components.
+
+Let me know if you’d like further customizations or additional features!
