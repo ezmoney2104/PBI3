@@ -132,10 +132,10 @@ export default {
           <span>{{ data.item.puppy_gender === 1 ? 'Male' : 'Female' }}</span>
         </template>
 
-        <template #cell(action)>
+        <template #cell(action)="data">
           <b-button-group>
             <b-button>Adopt</b-button>
-            <b-button>Delete</b-button>
+            <b-button variant="danger" @click="deletePuppies(data.item)">Delete</b-button>
           </b-button-group>
         </template>
       </b-table>
@@ -182,20 +182,28 @@ export default {
         alert('An error occured while fetching puppies')
       }
     },
-    gender(item) {
-      if (item === 1) {
-        return 'Male'
-      } else {
-        return 'Female'
+
+    async deletePuppies(pup) {
+      const value = confirm('Are you sure you want to delete?')
+      if (value) {
+        try {
+          const api = new FetchAPI()
+          const response = await api.delete(`/api/delete-puppy/${pup.puppy_id}`)
+          console.log(response)
+          this.fetchPuppies()
+        } catch (err) {
+          console.log(err)
+          alert('An error occured while deleting puppies')
+        }
       }
     }
   },
   mounted() {
     this.fetchPuppies()
-    this.gender()
   }
 }
 </script>
+
 
 
 
