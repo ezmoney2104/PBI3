@@ -127,7 +127,18 @@ export default {
     </div>
 
     <b-card>
-      <b-table striped hover :items="puppies"></b-table>
+      <b-table striped hover :items="puppies" :fields="fields">
+        <template #cell(puppy_gender)>
+          <span>{{ puppy_gender === 1 ? 'Male' : 'Female' }}</span>
+        </template>
+
+        <template #cell(action)>
+          <b-button-group>
+            <b-button>Adopt</b-button>
+            <b-button>Delete</b-button>
+          </b-button-group>
+        </template>
+      </b-table>
     </b-card>
   </b-container>
 </template>
@@ -135,6 +146,7 @@ export default {
 <script>
 import PuppyForm from './PuppyForm.vue'
 import PuppyList from './PuppyList.vue'
+
 import { FetchAPI } from '@/utils/apiRequest'
 
 export default {
@@ -143,7 +155,14 @@ export default {
   data() {
     return {
       puppies: [],
-      fields: []
+      fields: [
+        { key: 'puppy_name', label: 'Name' },
+        { key: 'puppy_birthdate', label: 'Birthdate' },
+        { key: 'puppy_breed', label: 'Breed' },
+        { key: 'puppy_gender', label: 'Gender' },
+        { key: 'puppy_description', label: 'Description' },
+        { key: 'action', label: 'Action' }
+      ]
     }
   },
   methods: {
@@ -162,13 +181,22 @@ export default {
         console.log(err)
         alert('An error occured while fetching puppies')
       }
+    },
+    gender(item) {
+      if (item === 1) {
+        return 'Male'
+      } else {
+        return 'Female'
+      }
     }
   },
   mounted() {
     this.fetchPuppies()
+    this.gender()
   }
 }
 </script>
+
 
 --------------------
 
