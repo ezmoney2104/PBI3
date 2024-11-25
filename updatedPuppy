@@ -128,8 +128,8 @@ export default {
 
     <b-card>
       <b-table striped hover :items="puppies" :fields="fields">
-        <template #cell(puppy_gender)>
-          <span>{{ puppy_gender === 1 ? 'Male' : 'Female' }}</span>
+        <template #cell(puppy_gender)="data">
+          <span>{{ data.item.puppy_gender === 1 ? 'Male' : 'Female' }}</span>
         </template>
 
         <template #cell(action)>
@@ -196,6 +196,7 @@ export default {
   }
 }
 </script>
+
 
 
 --------------------
