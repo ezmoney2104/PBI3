@@ -1,0 +1,239 @@
+API Endpoints
+Add a Shoe
+Method: POST
+Endpoint: /shoes
+Description: Add a new shoe to the database, including the image.
+python
+Copy code
+@app.route('/shoes', methods=['POST'])
+def add_shoe():
+    data = request.form
+    file = request.files.get('shoe_picture')
+
+    if file:
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+    else:
+        filepath = None
+
+    shoe = ShoeStore(
+        shoe_brand=data['shoe_brand'],
+        shoe_name=data['shoe_name'],
+        shoe_price=data['shoe_price'],
+        owner_name=data['owner_name'],
+        owner_contact=data['owner_contact'],
+        owner_address=data['owner_address'],
+        shoe_picture=filepath,
+    )
+
+    db.session.add(shoe)
+    db.session.commit()
+
+    return jsonify({"message": "Shoe added successfully!", "shoe": shoe.to_dict()}), 201
+Get All Shoes
+Method: GET
+Endpoint: /shoes
+Description: Retrieve all shoes from the database.
+python
+Copy code
+@app.route('/shoes', methods=['GET'])
+def get_shoes():
+    shoes = ShoeStore.query.all()
+    return jsonify([shoe.to_dict() for shoe in shoes])
+Get a Single Shoe
+Method: GET
+Endpoint: /shoes/<int:shoe_id>
+Description: Retrieve a shoe by ID.
+python
+Copy code
+@app.route('/shoes/<int:shoe_id>', methods=['GET'])
+def get_shoe(shoe_id):
+    shoe = ShoeStore.query.get_or_404(shoe_id)
+    return jsonify(shoe.to_dict())
+Update a Shoe
+Method: PUT
+Endpoint: /shoes/<int:shoe_id>
+Description: Update a shoe's details.
+python
+Copy code
+@app.route('/shoes/<int:shoe_id>', methods=['PUT'])
+def update_shoe(shoe_id):
+    shoe = ShoeStore.query.get_or_404(shoe_id)
+    data = request.form
+
+    shoe.shoe_brand = data.get('shoe_brand', shoe.shoe_brand)
+    shoe.shoe_name = data.get('shoe_name', shoe.shoe_name)
+    shoe.shoe_price = data.get('shoe_price', shoe.shoe_price)
+    shoe.owner_name = data.get('owner_name', shoe.owner_name)
+    shoe.owner_contact = data.get('owner_contact', shoe.owner_contact)
+    shoe.owner_address = data.get('owner_address', shoe.owner_address)
+
+    file = request.files.get('shoe_picture')
+    if file:
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        shoe.shoe_picture = filepath
+
+    db.session.commit()
+    return jsonify({"message": "Shoe updated successfully!", "shoe": shoe.to_dict()})
+Delete a Shoe
+Method: DELETE
+Endpoint: /shoes/<int:shoe_id>
+Description: Delete a shoe from the database.
+python
+Copy code
+@app.route('/shoes/<int:shoe_id>', methods=['DELETE'])
+def delete_shoe(shoe_id):
+    shoe = ShoeStore.query.get_or_404(shoe_id)
+    if shoe.shoe_picture and os.path.exists(shoe.shoe_picture):
+        os.remove(shoe.shoe_picture)  # Delete the image file
+
+    db.session.delete(shoe)
+    db.session.commit()
+    return jsonify({"message": "Shoe deleted successfully!"})
+
+
+
+---------------------------------------
+
+
+Add a Shoe (Update ShoeForm.vue)
+Update the submitForm method to send the shoe data and image to the Flask API:
+
+javascript
+Copy code
+import apiClient from '../api/axios';
+
+export default {
+  methods: {
+    async submitForm() {
+      const formData = new FormData();
+      formData.append('shoe_brand', this.shoe.shoe_brand);
+      formData.append('shoe_name', this.shoe.shoe_name);
+      formData.append('shoe_price', this.shoe.shoe_price);
+      formData.append('owner_name', this.shoe.owner_name);
+      formData.append('owner_contact', this.shoe.owner_contact);
+      formData.append('owner_address', this.shoe.owner_address);
+      formData.append('shoe_picture', this.shoe_picture); // Image file
+
+      try {
+        const response = await apiClient.post('/shoes', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        alert('Shoe added successfully!');
+        this.$emit('shoeAdded', response.data.shoe); // Notify parent to refresh list
+      } catch (error) {
+        console.error('Error adding shoe:', error);
+        alert('Failed to add shoe.');
+      }
+    },
+  },
+};
+Get All Shoes (Update ShoeList.vue)
+Fetch the list of shoes from the backend when the component loads.
+
+javascript
+Copy code
+import apiClient from '../api/axios';
+
+export default {
+  data() {
+    return {
+      shoes: [],
+    };
+  },
+  async created() {
+    await this.fetchShoes();
+  },
+  methods: {
+    async fetchShoes() {
+      try {
+        const response = await apiClient.get('/shoes');
+        this.shoes = response.data;
+      } catch (error) {
+        console.error('Error fetching shoes:', error);
+        alert('Failed to load shoes.');
+      }
+    },
+    refreshShoes() {
+      this.fetchShoes();
+    },
+  },
+};
+Edit a Shoe (Update ShoeCard.vue)
+Send a PUT request to update shoe details.
+
+javascript
+Copy code
+import apiClient from '../api/axios';
+
+export default {
+  methods: {
+    async editShoe() {
+      const formData = new FormData();
+      formData.append('shoe_brand', this.shoe.shoe_brand);
+      formData.append('shoe_name', this.shoe.shoe_name);
+      formData.append('shoe_price', this.shoe.shoe_price);
+      formData.append('owner_name', this.shoe.owner_name);
+      formData.append('owner_contact', this.shoe.owner_contact);
+      formData.append('owner_address', this.shoe.owner_address);
+
+      if (this.newPicture) {
+        formData.append('shoe_picture', this.newPicture); // New image file if updated
+      }
+
+      try {
+        await apiClient.put(`/shoes/${this.shoe.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        alert('Shoe updated successfully!');
+        this.$emit('refresh'); // Notify parent to refresh list
+      } catch (error) {
+        console.error('Error updating shoe:', error);
+        alert('Failed to update shoe.');
+      }
+    },
+  },
+};
+Delete a Shoe (Update ShoeCard.vue)
+Send a DELETE request to remove a shoe.
+
+javascript
+Copy code
+methods: {
+  async deleteShoe() {
+    try {
+      await apiClient.delete(`/shoes/${this.shoe.id}`);
+      alert('Shoe deleted successfully!');
+      this.$emit('refresh'); // Notify parent to refresh list
+    } catch (error) {
+      console.error('Error deleting shoe:', error);
+      alert('Failed to delete shoe.');
+    }
+  },
+},
+Buy a Shoe (Add a Placeholder API)
+If a "Buy" action needs server logic, we can simulate it for now:
+
+javascript
+Copy code
+methods: {
+  async buyShoe() {
+    try {
+      // Example: Notify the server about the purchase (if needed)
+      await apiClient.post(`/shoes/${this.shoe.id}/buy`);
+      alert(`Successfully purchased "${this.shoe.shoe_name}"!`);
+    } catch (error) {
+      console.error('Error purchasing shoe:', error);
+      alert('Failed to purchase shoe.');
+    }
+  },
+},
+4. Updated Workflow
+Create (POST /shoes): Add shoes, including image upload.
+Read (GET /shoes): Display all shoes using API data.
+Update (PUT /shoes/<id>): Update shoe details.
+Delete (DELETE /shoes/<id>): Remove shoes from inventory.
+
