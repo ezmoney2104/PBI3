@@ -1,0 +1,430 @@
+class ShoeStore(db.Model):
+    __tablename__ = 'shoestore'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    shoe_brand = db.Column(db.String(32), nullable=False)
+    shoe_name = db.Column(db.String(32), nullable=False)
+    shoe_price = db.Column(db.Integer, nullable=False)
+    owner_name = db.Column(db.String(32), nullable=False)
+    owner_contact = db.Column(db.String(11), nullable=False)
+    owner_address = db.Column(db.String(64), nullable=False)
+    shoe_picture = db.Column(db.String(128))  # Store the file path for the image
+
+
+
+
+Further Enhancements
+Dynamic Pagination:
+
+Add pagination to display a limited number of shoes per page, improving usability for large inventories.
+Search Bar:
+
+Add a search bar to quickly find shoes by name or brand.
+Dark Mode Toggle:
+
+Allow users to switch between light and dark themes.
+Confirmation for Buy and Delete:
+
+Add modal dialogs for confirmation when buying or deleting a shoe.
+Enhanced Shoe Details Modal:
+
+Clicking on a shoe card will open a modal showing more details about the shoe.
+Loader Animation:
+
+Add a loader animation while data is being fetched from the backend.
+Responsive Design:
+
+Optimize the layout for mobile, tablet, and desktop using BootstrapVue grid classes.
+Updated Source Code
+1. App.vue
+Updated to include theme toggle and loader.
+
+vue
+Copy code
+<template>
+  <div :class="theme">
+    <b-navbar type="dark" variant="dark" class="mb-4" :style="navbarStyle">
+      <b-navbar-brand href="#">ShoeStore</b-navbar-brand>
+      <b-navbar-nav class="ml-auto">
+        <b-nav-item href="#register">Register Shoe</b-nav-item>
+        <b-nav-item href="#shoes">Available Shoes</b-nav-item>
+      </b-navbar-nav>
+      <b-button @click="toggleTheme" variant="outline-light" size="sm" class="ml-3">
+        {{ theme === 'dark-theme' ? 'Light Mode' : 'Dark Mode' }}
+      </b-button>
+    </b-navbar>
+    <b-container>
+      <b-spinner v-if="isLoading" label="Loading..."></b-spinner>
+      <ShoeForm @shoeAdded="fetchShoes" />
+      <ShoeList :shoes="shoes" @refreshShoes="fetchShoes" />
+    </b-container>
+    <b-footer class="text-center py-3" :style="footerStyle">
+      © 2024 ShoeStore | Powered by Vue.js and Flask
+    </b-footer>
+  </div>
+</template>
+
+<script>
+import ShoeForm from './components/ShoeForm.vue';
+import ShoeList from './components/ShoeList.vue';
+import axios from 'axios';
+
+export default {
+  components: { ShoeForm, ShoeList },
+  data() {
+    return {
+      shoes: [],
+      isLoading: true,
+      theme: 'light-theme',
+    };
+  },
+  computed: {
+    navbarStyle() {
+      return this.theme === 'dark-theme' ? { backgroundColor: '#212529' } : { backgroundColor: '#343a40' };
+    },
+    footerStyle() {
+      return this.theme === 'dark-theme' ? { backgroundColor: '#212529', color: '#fff' } : { backgroundColor: '#f8f9fa', color: '#212529' };
+    },
+  },
+  methods: {
+    async fetchShoes() {
+      this.isLoading = true;
+      try {
+        const response = await axios.get('/shoes');
+        this.shoes = response.data;
+      } catch (error) {
+        console.error('Error fetching shoes:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    toggleTheme() {
+      this.theme = this.theme === 'light-theme' ? 'dark-theme' : 'light-theme';
+    },
+  },
+  mounted() {
+    this.fetchShoes();
+  },
+};
+</script>
+
+<style>
+.light-theme {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+.dark-theme {
+  background-color: #212529;
+  color: #f8f9fa;
+}
+
+body {
+  margin: 0;
+}
+</style>
+2. ShoeForm.vue
+Added a reset button to clear the form.
+
+vue
+Copy code
+<template>
+  <b-container id="register" class="mt-4">
+    <h3>Register a Shoe</h3>
+    <b-form @submit.prevent="submitShoe">
+      <b-row>
+        <b-col md="6">
+          <b-form-group label="Shoe Brand">
+            <b-form-input v-model="form.shoe_brand" required />
+          </b-form-group>
+        </b-col>
+        <b-col md="6">
+          <b-form-group label="Shoe Name">
+            <b-form-input v-model="form.shoe_name" required />
+          </b-form-group>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col md="6">
+          <b-form-group label="Shoe Price">
+            <b-form-input v-model="form.shoe_price" type="number" required />
+          </b-form-group>
+        </b-col>
+        <b-col md="6">
+          <b-form-group label="Owner Name">
+            <b-form-input v-model="form.owner_name" required />
+          </b-form-group>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col md="6">
+          <b-form-group label="Owner Contact">
+            <b-form-input v-model="form.owner_contact" required />
+          </b-form-group>
+        </b-col>
+        <b-col md="6">
+          <b-form-group label="Owner Address">
+            <b-form-input v-model="form.owner_address" required />
+          </b-form-group>
+        </b-col>
+      </b-row>
+      <b-form-group label="Upload Shoe Picture">
+        <b-form-file @change="previewImage" required />
+        <img v-if="imagePreview" :src="imagePreview" class="img-thumbnail mt-3" />
+      </b-form-group>
+      <b-button type="submit" variant="success">Register Shoe</b-button>
+      <b-button @click="resetForm" variant="secondary" class="ml-2">Reset</b-button>
+    </b-form>
+  </b-container>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      form: {
+        shoe_brand: '',
+        shoe_name: '',
+        shoe_price: null,
+        owner_name: '',
+        owner_contact: '',
+        owner_address: '',
+        shoe_picture: null,
+      },
+      imagePreview: null,
+    };
+  },
+  methods: {
+    previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.imagePreview = URL.createObjectURL(file);
+        this.form.shoe_picture = file;
+      }
+    },
+    async submitShoe() {
+      const formData = new FormData();
+      Object.keys(this.form).forEach((key) => {
+        formData.append(key, this.form[key]);
+      });
+      try {
+        await axios.post('/shoes', formData);
+        this.$emit('shoeAdded');
+        this.resetForm();
+      } catch (error) {
+        console.error('Error registering shoe:', error);
+      }
+    },
+    resetForm() {
+      this.form = {
+        shoe_brand: '',
+        shoe_name: '',
+        shoe_price: null,
+        owner_name: '',
+        owner_contact: '',
+        owner_address: '',
+        shoe_picture: null,
+      };
+      this.imagePreview = null;
+    },
+  },
+};
+</script>
+3. Updated Design for Pagination
+In ShoeList.vue, add pagination and search functionality:
+Adding pagination & Cards
+
+3. ShoeList.vue - Updated with Pagination and Search
+This file now includes pagination and a search bar for a more user-friendly experience.
+
+vue
+Copy code
+<template>
+  <b-container id="shoes" class="mt-4">
+    <h3 class="text-center mb-4">Available Shoes</h3>
+    <b-row class="mb-4">
+      <!-- Search Bar -->
+      <b-col md="6">
+        <b-form-group label="Search by Name or Brand">
+          <b-form-input v-model="searchQuery" placeholder="Search shoes..." />
+        </b-form-group>
+      </b-col>
+      <!-- Filter by Brand -->
+      <b-col md="3">
+        <b-form-group label="Filter by Brand">
+          <b-form-select v-model="filters.brand" :options="brandOptions" />
+        </b-form-group>
+      </b-col>
+      <!-- Sort by Price -->
+      <b-col md="3">
+        <b-form-group label="Sort by Price">
+          <b-form-select v-model="filters.sort" :options="['', 'Ascending', 'Descending']" />
+        </b-form-group>
+      </b-col>
+    </b-row>
+
+    <!-- Shoe Cards -->
+    <b-row>
+      <b-col md="4" v-for="shoe in paginatedShoes" :key="shoe.id" class="mb-4">
+        <ShoeCard :shoe="shoe" @refresh="refreshShoes" />
+      </b-col>
+    </b-row>
+
+    <!-- Pagination -->
+    <b-pagination
+      v-model="currentPage"
+      :total-rows="filteredShoes.length"
+      :per-page="itemsPerPage"
+      class="my-4"
+      align="center"
+    ></b-pagination>
+  </b-container>
+</template>
+
+<script>
+import ShoeCard from './ShoeCard.vue';
+
+export default {
+  components: { ShoeCard },
+  props: ['shoes'],
+  data() {
+    return {
+      searchQuery: '',
+      filters: {
+        brand: '',
+        sort: '',
+      },
+      currentPage: 1,
+      itemsPerPage: 6, // Number of shoes per page
+    };
+  },
+  computed: {
+    brandOptions() {
+      const brands = [...new Set(this.shoes.map((shoe) => shoe.shoe_brand))];
+      return ['', ...brands];
+    },
+    filteredShoes() {
+      let result = this.shoes;
+
+      // Filter by search query
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        result = result.filter(
+          (shoe) =>
+            shoe.shoe_name.toLowerCase().includes(query) ||
+            shoe.shoe_brand.toLowerCase().includes(query)
+        );
+      }
+
+      // Filter by brand
+      if (this.filters.brand) {
+        result = result.filter((shoe) => shoe.shoe_brand === this.filters.brand);
+      }
+
+      // Sort by price
+      if (this.filters.sort === 'Ascending') {
+        result.sort((a, b) => a.shoe_price - b.shoe_price);
+      } else if (this.filters.sort === 'Descending') {
+        result.sort((a, b) => b.shoe_price - a.shoe_price);
+      }
+
+      return result;
+    },
+    paginatedShoes() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      return this.filteredShoes.slice(start, start + this.itemsPerPage);
+    },
+  },
+  methods: {
+    refreshShoes() {
+      this.$emit('refreshShoes');
+    },
+  },
+};
+</script>
+
+<style scoped>
+.text-center {
+  font-family: 'Roboto', sans-serif;
+}
+</style>
+4. ShoeCard.vue - Enhanced with Details Modal and Confirmation Dialogs
+This now includes a modal for detailed shoe information and confirmation dialogs for "Buy" and "Delete" actions.
+
+vue
+Copy code
+<template>
+  <b-card :img-src="shoe.shoe_picture" img-alt="Shoe Image" img-top>
+    <b-card-title>{{ shoe.shoe_brand }} - {{ shoe.shoe_name }}</b-card-title>
+    <b-card-text>Price: ${{ shoe.shoe_price }}</b-card-text>
+    <b-button @click="showDetails" variant="info" class="mr-2">Details</b-button>
+    <b-button @click="confirmBuy" variant="primary" class="mr-2">Buy</b-button>
+    <b-button @click="confirmDelete" variant="danger">Delete</b-button>
+
+    <!-- Details Modal -->
+    <b-modal v-model="detailsModal" title="Shoe Details" centered>
+      <img :src="shoe.shoe_picture" class="img-fluid mb-3" />
+      <p><strong>Brand:</strong> {{ shoe.shoe_brand }}</p>
+      <p><strong>Name:</strong> {{ shoe.shoe_name }}</p>
+      <p><strong>Price:</strong> ${{ shoe.shoe_price }}</p>
+      <p><strong>Owner:</strong> {{ shoe.owner_name }}</p>
+      <p><strong>Contact:</strong> {{ shoe.owner_contact }}</p>
+      <p><strong>Address:</strong> {{ shoe.owner_address }}</p>
+      <b-button variant="secondary" @click="detailsModal = false">Close</b-button>
+    </b-modal>
+
+    <!-- Buy Confirmation -->
+    <b-modal v-model="buyModal" title="Confirm Purchase" centered>
+      <p>Are you sure you want to buy "{{ shoe.shoe_name }}" for ${{ shoe.shoe_price }}?</p>
+      <b-button variant="primary" @click="buyShoe">Yes</b-button>
+      <b-button variant="secondary" @click="buyModal = false">No</b-button>
+    </b-modal>
+
+    <!-- Delete Confirmation -->
+    <b-modal v-model="deleteModal" title="Confirm Deletion" centered>
+      <p>Are you sure you want to delete "{{ shoe.shoe_name }}"?</p>
+      <b-button variant="danger" @click="deleteShoe">Yes</b-button>
+      <b-button variant="secondary" @click="deleteModal = false">No</b-button>
+    </b-modal>
+  </b-card>
+</template>
+
+<script>
+export default {
+  props: ['shoe'],
+  data() {
+    return {
+      detailsModal: false,
+      buyModal: false,
+      deleteModal: false,
+    };
+  },
+  methods: {
+    showDetails() {
+      this.detailsModal = true;
+    },
+    confirmBuy() {
+      this.buyModal = true;
+    },
+    confirmDelete() {
+      this.deleteModal = true;
+    },
+    buyShoe() {
+      this.buyModal = false;
+      alert(`Successfully purchased "${this.shoe.shoe_name}"!`);
+    },
+    deleteShoe() {
+      this.deleteModal = false;
+      this.$emit('refresh'); // Assume deletion logic on the backend is handled here
+    },
+  },
+};
+</script>
+Summary of Enhancements
+Pagination: Helps with large inventories.
+Search: Quickly find shoes.
+Details Modal: Gives in-depth info about a shoe.
+Confirmation Dialogs: Adds user confirmation for sensitive actions.
+Dark Mode Toggle: Improves visual experience
