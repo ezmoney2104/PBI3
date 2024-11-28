@@ -1,0 +1,81 @@
+shoe tlb
+
+from src.setup_db_example.database import db
+
+
+class ShoeModel(db.Model):
+    """Represents a model for storing the data in shoe_tbl
+
+    Args:
+        db (sqlalchemy): SQLAlchemy engine
+
+    Returns:
+        list: shoe_tbl
+    """
+
+    __tablename__ = "shoe_tbl"
+
+    shoe_id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    shoe_brand = db.Column(db.String(32), nullable=False)
+    shoe_name = db.Column(db.String(32), nullable=False)
+    shoe_price = db.Column(db.Integer, nullable=False)
+
+    sold_info = db.relationship("SoldModel", back_populates="shoe_info")
+
+
+shoe owner tbl
+
+from src.setup_db_example.database import db
+
+
+class ShoeOwnerModel(db.Model):
+    """Represents a model for storing the data in shoe_owner_tbl
+
+    Args:
+        db (sqlalchemy): SQLAlchemy engine
+
+    Returns:
+        list: shoe_owner_tbl
+    """
+
+    __tablename__ = "shoe_owner_tbl"
+
+    shoe_owner_id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    shoe_owner_name = db.Column(db.String(32), nullable=False)
+    shoe_owner_contact = db.Column(db.BigInteger, nullable=False, unique=True)
+    show_owner_address = db.Column(db.String(64), nullable=False)
+
+    sold_info = db.relationship("SoldModel", back_populates="shoe_owner_info")
+
+
+sold tbl
+
+from src.setup_db_example.database import db
+
+
+class SoldModel(db.Model):
+    """Represents a model for storing the data in sold_tbl
+
+    Args:
+        db (sqlalchemy): SQLAlchemy engine
+
+    Returns:
+        list: sold_tbl
+    """
+
+    __tablename__ = "sold_tbl"
+
+    sold_id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    buyer_id = db.Column(db.Integer, db.ForeignKey("shoe_owner_tbl.shoe_owner_id"))
+    shoe_tbl_id = db.Column(db.Integer, db.ForeignKey("shoe_tbl.shoe_id"))
+
+    sold_date = db.Column(db.Date)
+
+    shoe_owner_info = db.relationship("ShoeOwnerModel", back_populates="sold_info")
+    shoe_info = db.relationship("ShoeModel", back_populates="sold_info")
+
+
+
