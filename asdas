@@ -273,3 +273,264 @@ export default {
 }
 </script>
 
+
+
+puppyDash
+
+<template>
+  <b-container>
+    <h2>Puppy Dashboard</h2>
+    <b-table striped hover :items="puppies" :fields="fields"></b-table>
+  </b-container>
+</template>
+
+<script>
+import { FetchAPI } from "@/utils/apiRequest";
+
+export default {
+  name: "PuppyDashboard",
+  data() {
+    return {
+      puppies: [],
+      fields: [
+        { key: "name", label: "Name" },
+        { key: "breed", label: "Breed" },
+        { key: "birthdate", label: "Birthdate" },
+        { key: "gender", label: "Gender" },
+        { key: "description", label: "Description" },
+      ],
+    };
+  },
+  methods: {
+    async fetchPuppies() {
+      const api = new FetchAPI();
+      const response = await api.get("/api/get-puppies");
+      if (response.success) {
+        this.puppies = response.data;
+      }
+    },
+    startPolling() {
+      this.fetchPuppies();
+      this.pollingInterval = setInterval(this.fetchPuppies, 5000); // Poll every 5 seconds
+    },
+    stopPolling() {
+      clearInterval(this.pollingInterval);
+    },
+  },
+  mounted() {
+    this.startPolling();
+  },
+  beforeDestroy() {
+    this.stopPolling();
+  },
+};
+</script>
+
+
+--- new puppy
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <h1>{{ isEditing ? 'Update Puppy' : 'Register Puppy' }}</h1>
+    <b-form @submit.prevent="validateAndSubmit">
+      <b-form-group label="Name:">
+        <b-form-input
+          v-model="puppy.name"
+          placeholder="Enter name"
+          required
+        ></b-form-input>
+        <div v-if="errors.name" class="text-danger">{{ errors.name }}</div>
+      </b-form-group>
+
+      <b-form-group label="Breed:">
+        <b-form-input
+          v-model="puppy.breed"
+          placeholder="Enter breed"
+          required
+        ></b-form-input>
+        <div v-if="errors.breed" class="text-danger">{{ errors.breed }}</div>
+      </b-form-group>
+
+      <b-form-group label="Birthdate:">
+        <b-form-input
+          v-model="puppy.birthdate"
+          type="date"
+          placeholder="Enter birthdate"
+          required
+        ></b-form-input>
+      </b-form-group>
+
+      <b-form-group label="Gender:">
+        <b-form-select v-model="puppy.gender" :options="options"></b-form-select>
+      </b-form-group>
+
+      <b-form-group label="Description:">
+        <b-form-textarea
+          v-model="puppy.description"
+          placeholder="Enter puppy description..."
+          rows="3"
+          max-rows="6"
+          required
+        ></b-form-textarea>
+        <div v-if="errors.description" class="text-danger">{{ errors.description }}</div>
+      </b-form-group>
+
+      <b-button class="mt-2" type="submit">{{ isEditing ? 'Update Puppy' : 'Add Puppy' }}</b-button>
+    </b-form>
+  </b-container>
+</template>
+
+<script>
+import { FetchAPI } from '@/utils/apiRequest'
+
+export default {
+  name: 'PuppyForm',
+  props: ['editingPuppy'], // Receive puppy data for editing
+  data() {
+    return {
+      puppy: {
+        name: '',
+        breed: '',
+        birthdate: '',
+        gender: null,
+        description: ''
+      },
+      options: [
+        { value: null, text: 'Choose Gender', disabled: true },
+        { value: 1, text: 'Male' },
+        { value: 2, text: 'Female' }
+      ],
+      isEditing: false,
+      errors: {}
+    }
+  },
+  methods: {
+    validateAndSubmit() {
+      this.errors = {};
+
+      if (!this.puppy.name.trim()) {
+        this.errors.name = "Name cannot be empty or contain only spaces.";
+      }
+      if (!this.puppy.breed.trim()) {
+        this.errors.breed = "Breed cannot be empty or contain only spaces.";
+      }
+      if (!this.puppy.description.trim()) {
+        this.errors.description = "Description cannot be empty or contain only spaces.";
+      }
+
+      if (Object.keys(this.errors).length === 0) {
+        this.isEditing ? this.updatePuppy() : this.addPuppy();
+      }
+    },
+
+    async addPuppy() {
+      try {
+        const api = new FetchAPI();
+        const response = await api.post('/api/post-puppy', this.puppy);
+        if (response.success) {
+          this.$emit('puppyAdded');
+          this.resetForm();
+          alert('Puppy Added Successfully');
+        } else {
+          alert('Failed to Add Puppy');
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    async updatePuppy() {
+      try {
+        const api = new FetchAPI();
+        const response = await api.put(`/api/update-puppy/${this.puppy.puppy_id}`, this.puppy);
+        if (response.success) {
+          this.$emit('puppyUpdated');
+          this.resetForm();
+          alert('Puppy Updated Successfully');
+        } else {
+          alert('Failed to Update Puppy');
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    resetForm() {
+      this.puppy = {
+        name: '',
+        breed: '',
+        birthdate: '',
+        gender: null,
+        description: ''
+      };
+    }
+  },
+  watch: {
+    editingPuppy: {
+      immediate: true,
+      handler(newValue) {
+        if (newValue) {
+          this.puppy = { ...newValue };
+          this.isEditing = true;
+        } else {
+          this.isEditing = false;
+        }
+      }
+    }
+  }
+};
+</script>
+
+
+
+--- table
+
+<template>
+  <b-container>
+    <div>
+      <h2>Manage Puppies</h2>
+      <b-row>
+        <b-col>
+          <div class="d-grid gap-2">
+            <b-button variant="info" @click="showPuppyForm = !showPuppyForm">Add Puppy</b-button>
+          </div>
+        </b-col>
+        <b-col>
+          <div class="d-grid gap-2">
+            <b-button variant="info" @click="showOwnerForm = !showOwnerForm">Register Owner</b-button>
+          </div>
+        </b-col>
+      </b-row>
+      <PuppyForm
+        v-show="showPuppyForm"
+        @puppyAdded="fetchPuppies"
+        @puppyUpdated="fetchPuppies"
+        :editingPuppy="selectedPuppy"
+      />
+      <b-card>
+        <b-table
+          class="table-responsive"
+          striped
+          hover
+          :items="puppies"
+          :fields="fields"
+        >
+          <template #cell(puppy_gender)="data">
+            <span>{{ data.item.puppy_gender === 1 ? 'Male' : 'Female' }}</span>
+          </template>
+          <template #cell(adopted_by)="data">
+            <span>{{ data.item.owner_name || 'Not Adopted' }}</span>
+          </template>
+          <template #cell(action)="data">
+            <b-button-group>
+              <b-button @click="adoptPuppy(data.item)">Adopt</b-button>
+              <b-button @click="editPuppy(data.item)">Edit</b-button>
+              <b-button variant="danger" @click="deletePuppy(data.item)">Delete</b-button>
+            </b-button-group>
+          </template>
+        </b-table>
+      </b-card>
+    </div>
+  </b-container>
+</template>
+
