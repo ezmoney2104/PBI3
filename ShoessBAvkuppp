@@ -1,0 +1,263 @@
+KicksPage
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <h1 class="p-3 mb-2 text-black">
+      <img
+        src="data:image/png;base64,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"
+      />
+      <p>Kicks Reviews</p>
+    </h1>
+    <bRow>
+      <bCol>
+        <div class="d-grid gap-2">
+          <b-button variant="info" @click="showForm = !showForm">Post Shoes</b-button>
+        </div>
+      </bCol>
+      <bCol>
+        <div class="d-grid gap-2">
+          <b-button variant="info" @click="displayShoes = !displayShoes">Display Shoes</b-button>
+        </div>
+      </bCol>
+    </bRow>
+    <main-shoes v-show="showForm"></main-shoes>
+
+    <list-shoes></list-shoes>
+  </b-container>
+</template>
+
+<script>
+import ListShoes from './ListShoes.vue'
+import MainShoes from './MainShoes.vue'
+export default {
+  components: { MainShoes, ListShoes },
+  name: 'KicksPage',
+  data() {
+    return { showForm: false, displayShoes: false }
+  }
+}
+</script>
+
+<style scoped>
+h1 {
+  border-radius: 5px;
+  text-align: center;
+  background-color: #08cff1;
+}
+</style>
+
+
+
+Main shoesss
+
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-100">
+    <b-card>
+      <b-form @submit.prevent="formAddHandling">
+        <div class="my-2" v-for="(item, id) in items" :key="id">
+          <component
+            :is="item.componentName"
+            :key="resetShoeId"
+            :input="item"
+            @formData="addShoeData"
+            @change="eventHandler"
+            required
+          >
+          </component>
+        </div>
+      </b-form>
+    </b-card>
+  </b-container>
+</template>
+
+<script>
+import CommonTextArea from '@/components/common/CommonTextArea.vue'
+import CommonTextInput from '@/components/common/CommonTextInput.vue'
+import CommonButton from '@/components/common/CommonButton.vue'
+import { SHOE_INPUT } from '@/common/recipe/rTextInputRecipe'
+import { SHOETEXTAREA } from '@/common/recipe/rTextArea'
+import { SHOEBUTTONS } from '@/common/recipe/rButtonRecipe'
+
+export default {
+  name: 'MainShoes',
+  components: {
+    CommonTextInput,
+    CommonTextArea,
+    CommonButton
+  },
+  data() {
+    return {
+      items: [...SHOE_INPUT, ...SHOETEXTAREA, ...SHOEBUTTONS],
+      resetShoeId: 0,
+      formShoes: {
+        brand: '',
+        name: '',
+        price: '',
+        description: ''
+      },
+      errors: []
+    }
+  },
+  methods: {
+    /**
+     * Function to handle the submit button and break it once formAddHandling function is used
+     * @param {object} action - used assign and get the action taken of case statement
+     */
+    eventHandler(action) {
+      switch (action) {
+        case 'Submit':
+          this.formAddHandling()
+          this.submitShoes()
+          break
+      }
+    },
+    /**
+     * Function to assign value to key
+     * @param {object} data - used to assign and get key and value variable
+     */
+    addShoeData(data) {
+      this.formShoes[data.key] = data.value
+    },
+    /**
+     * Used to display data to console log and check errors and resets the array
+     */
+    formAddHandling() {
+      if (this.checkValidity()) {
+        console.log('Data Added:', this.formShoes)
+        alert('Form Submitted!')
+        this.resetShoes()
+      }
+    },
+
+    /**
+     * Function to add data to the shoe table in the database
+     */
+
+    async submitShoes() {
+      try {
+        // this.checkValidity()
+        const api = new FetchAPI()
+        const response = await api.post('/api/post-shoes', this.formShoes)
+        if (response.success) {
+          this.$emit('shoeAdded')
+          alert('Shoe Added Successfully')
+          // this.fetchShoes()
+        } else {
+          alert('Failed to Add Shoes')
+        }
+      } catch (err) {
+        console.log(err)
+        alert('An error occurred')
+      }
+    },
+
+    /**
+     * Function to reset formShoes
+     */
+    resetShoes() {
+      this.formShoes = {
+        brand: '',
+        name: '',
+        price: '',
+        description: ''
+      }
+      this.resetShoeId += 1
+    },
+    /**
+     * Function to check validity of forms
+     */
+    checkValidity() {
+      const namePattern = /^[A-Za-z\s]+$/
+      const pricePattern = /^[0-9]*$/
+      this.errors = []
+
+      const validators = [
+        {
+          condition: () =>
+            this.formShoes.brand.length > 10 ||
+            this.formShoes.brand.trim() === '' ||
+            !namePattern.test(this.formShoes.brand),
+          message: 'Brand must not be greater than 10 characters or should not be blank',
+          action: () => (this.formShoes.brand = '')
+        },
+        {
+          condition: () =>
+            this.formShoes.name.length > 10 ||
+            this.formShoes.name.trim() === '' ||
+            !namePattern.test(this.formShoes.name),
+          message: 'Shoe Name must not be greater than 10 characters or should not be blank',
+          action: () => (this.formShoes.name = '')
+        },
+        {
+          condition: () => !pricePattern.test(this.formShoes.price),
+          message: 'Invalid number, must enter at least 1 price',
+          action: () => (this.formShoes.price = '')
+        },
+        {
+          condition: () => this.formShoes.description.trim() === '',
+          message: 'Please enter your description',
+          action: () => (this.formShoes.description = '')
+        }
+      ]
+
+      for (const validator of validators) {
+        if (validator.condition()) {
+          this.errors.push(validator.message)
+          if (validator.action) validator.action()
+        }
+      }
+
+      if (this.errors.length > 0) {
+        this.errors.forEach((error) => alert(error))
+        return false
+      }
+
+      return true
+    }
+  }
+}
+</script>
+
+
+
+----------------------
+
+List shoes
+
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-100">
+    <b-table
+      class="table mx-auto my-4 w-75 text-break"
+      striped
+      hover
+      :items="shoes"
+      :fields="fields"
+    >
+      <template #cell(action)="data">
+        <b-button-group>
+          <b-button @click="editPuppy(data.item)">Edit</b-button>
+          <b-button variant="danger" @click="deletePuppy(data.item)">Delete</b-button>
+        </b-button-group>
+      </template>
+    </b-table>
+  </b-container>
+</template>
+
+<script>
+export default {
+  name: 'ListShoes',
+  data() {
+    return {
+      shoes: [],
+      fields: [
+        { key: 'shoe_brand', label: 'Brand' },
+        { key: 'shoe_name', label: 'Name' },
+        { key: 'shoe_price', label: 'Price' },
+        { key: 'shoe_description', label: 'Description' }
+      ]
+    }
+  }
+}
+</script>
