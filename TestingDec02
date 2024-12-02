@@ -1,0 +1,305 @@
+import pytest
+from flask import Flask
+from src.setup_db_example.database import db
+from src.setup_db_example.models.m_shoe_model import ShoeModel
+from src.setup_db_example.api.shoe_api import shoe_api_router
+
+
+@pytest.fixture
+def app():
+    """Create a Flask application instance for testing."""
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    db.init_app(app)
+    app.register_blueprint(shoe_api_router)
+
+    with app.app_context():
+        db.create_all()
+        # Insert sample data
+        sample_shoe = ShoeModel(
+            shoe_brand="Nike",
+            shoe_name="Air Max",
+            shoe_price=120,
+            shoe_description="A comfortable running shoe",
+        )
+        db.session.add(sample_shoe)
+        db.session.commit()
+
+    yield app
+
+
+@pytest.fixture
+def client(app):
+    """Provide a test client for the Flask app."""
+    return app.test_client()
+
+
+def test_get_shoes(client):
+    """Test fetching all shoes."""
+    response = client.get("/api/get-shoes")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert len(data["data"]) == 1
+    assert data["data"][0]["shoe_brand"] == "Nike"
+
+
+def test_add_shoe(client):
+    """Test adding a new shoe."""
+    new_shoe = {
+        "params": {
+            "brand": "Adidas",
+            "name": "Ultra Boost",
+            "price": 180,
+            "description": "High-performance running shoe",
+        }
+    }
+    response = client.post("/api/post-shoes", json=new_shoe)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["message"] == "Shoe added successfully"
+
+    # Verify the shoe was added
+    response = client.get("/api/get-shoes")
+    data = response.get_json()
+    assert len(data["data"]) == 2
+
+
+def test_delete_shoe(client):
+    """Test deleting a shoe."""
+    response = client.delete("/api/delete-shoe/1")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["message"] == "Shoe deleted successfully"
+
+    # Verify the shoe was deleted
+    response = client.get("/api/get-shoes")
+    data = response.get_json()
+    assert len(data["data"]) == 0
+
+
+def test_update_shoe(client):
+    """Test updating a shoe's status."""
+    update_data = {"params": {"value": "Updated"}}
+    response = client.put("/api/update-shoes/1", json=update_data)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["success"] is True
+    assert data["message"] == "Shoe updated successfully"
+
+    # Verify the update
+    response = client.get("/api/get-shoes")
+    data = response.get_json()
+    assert data["data"][0]["shoe_status"] == "Updated"
+
+
+def test_add_shoe_validation(client):
+    """Test adding a shoe with missing fields."""
+    invalid_shoe = {"params": {"brand": "Puma"}}
+    response = client.post("/api/post-shoes", json=invalid_shoe)
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["success"] is False
+    assert "Field 'name' is required" in data["message"]
+
+
+
+-----
+
+import { shallowMount } from '@vue/test-utils';
+import KicksPage from '@/components/KicksPage.vue';
+import ListShoes from '@/components/ListShoes.vue';
+import MainShoes from '@/components/MainShoes.vue';
+import { FetchAPI } from '@/utils/apiRequest';
+
+jest.mock('@/utils/apiRequest', () => ({
+  FetchAPI: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue({ success: true, data: [{ id: 1, name: 'Air Max' }] }),
+  })),
+}));
+
+describe('KicksPage.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(KicksPage, {
+      stubs: {
+        'b-container': { template: '<div><slot></slot></div>' },
+        'b-button': { template: '<button @click="$emit(\'click\')"><slot></slot></button>' },
+        'b-row': { template: '<div><slot></slot></div>' },
+        'b-col': { template: '<div><slot></slot></div>' },
+      },
+    });
+  });
+
+  afterEach(() => {
+    wrapper.destroy();
+  });
+
+  it('renders the component with correct initial elements', () => {
+    expect(wrapper.find('h1').text()).toContain('Kicks Reviews');
+    expect(wrapper.find('img').attributes('src')).toBe('../../../assets/img/sneakers.png');
+    expect(wrapper.findComponent(ListShoes).exists()).toBe(true);
+    expect(wrapper.findComponent(MainShoes).exists()).toBe(true);
+  });
+
+  it('toggles showForm when "Post Shoes" button is clicked', async () => {
+    const postButton = wrapper.findAll('button').at(0);
+    expect(wrapper.vm.showForm).toBe(false);
+    await postButton.trigger('click');
+    expect(wrapper.vm.showForm).toBe(true);
+    await postButton.trigger('click');
+    expect(wrapper.vm.showForm).toBe(false);
+  });
+
+  it('toggles displayShoes when "Display Shoes" button is clicked', async () => {
+    const displayButton = wrapper.findAll('button').at(1);
+    expect(wrapper.vm.displayShoes).toBe(false);
+    await displayButton.trigger('click');
+    expect(wrapper.vm.displayShoes).toBe(true);
+    await displayButton.trigger('click');
+    expect(wrapper.vm.displayShoes).toBe(false);
+  });
+
+  it('fetches shoes on mount and sets shoes data', async () => {
+    const api = new FetchAPI();
+    await wrapper.vm.fetchShoes();
+    expect(api.get).toHaveBeenCalledWith('/api/get-shoes');
+    expect(wrapper.vm.shoes).toEqual([{ id: 1, name: 'Air Max' }]);
+  });
+
+  it('emits "shoeAdded" event when ListShoes component triggers it', async () => {
+    const listShoesComponent = wrapper.findComponent(ListShoes);
+    listShoesComponent.vm.$emit('shoeAdded');
+    await wrapper.vm.$nextTick();
+    expect(FetchAPI).toHaveBeenCalled();
+  });
+});
+
+
+-----
+import { shallowMount } from '@vue/test-utils';
+import ListShoes from '@/components/ListShoes.vue';
+import CommonDropdown from '@/components/common/CommonDropdown.vue';
+import { FetchAPI } from '@/utils/apiRequest';
+
+jest.mock('@/utils/apiRequest', () => ({
+  FetchAPI: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue({
+      success: true,
+      data: [
+        {
+          shoe_id: 1,
+          shoe_brand: 'Nike',
+          shoe_name: 'Air Max',
+          shoe_price: 120,
+          shoe_description: 'A running shoe',
+          shoe_status: 0,
+        },
+      ],
+    }),
+    put: jest.fn().mockResolvedValue({ success: true }),
+    delete: jest.fn().mockResolvedValue({ success: true }),
+  })),
+}));
+
+describe('ListShoes.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(ListShoes, {
+      stubs: {
+        'b-container': { template: '<div><slot></slot></div>' },
+        'b-card': { template: '<div><slot></slot></div>' },
+        'b-table': { template: '<div><slot></slot></div>' },
+        'b-button': { template: '<button @click="$emit(\'click\')"><slot></slot></button>' },
+        'b-button-group': { template: '<div><slot></slot></div>' },
+        'b-modal': { template: '<div><slot></slot></div>' },
+        'b-row': { template: '<div><slot></slot></div>' },
+        'b-col': { template: '<div><slot></slot></div>' },
+      },
+      components: { CommonDropdown },
+    });
+  });
+
+  afterEach(() => {
+    wrapper.destroy();
+  });
+
+  it('renders the component with initial data', async () => {
+    expect(wrapper.vm.shoes).toEqual([]);
+    await wrapper.vm.fetchShoes();
+    expect(wrapper.vm.shoes).toEqual([
+      {
+        shoe_id: 1,
+        shoe_brand: 'Nike',
+        shoe_name: 'Air Max',
+        shoe_price: 120,
+        shoe_description: 'A running shoe',
+        shoe_status: 0,
+      },
+    ]);
+  });
+
+  it('toggles edit modal and assigns selectedShoes correctly', () => {
+    wrapper.vm.editShoes({ shoe_id: 1 });
+    expect(wrapper.vm.editStatus).toBe(true);
+    expect(wrapper.vm.selectedShoes).toEqual({ shoe_id: 1 });
+
+    wrapper.vm.editShoes();
+    expect(wrapper.vm.editStatus).toBe(false);
+  });
+
+  it('assigns status via CommonDropdown component', () => {
+    const dropdownStatus = { value: 1, label: 'Sold' };
+    wrapper.vm.assignStatus(dropdownStatus);
+    expect(wrapper.vm.shoeStatus).toEqual(dropdownStatus);
+  });
+
+  it('sends PUT request when updating shoe status', async () => {
+    const api = new FetchAPI();
+    wrapper.vm.selectedShoes = { shoe_id: 1 };
+    wrapper.vm.shoeStatus = { value: 1, label: 'Sold' };
+
+    await wrapper.vm.putShoeStatus();
+
+    expect(api.put).toHaveBeenCalledWith('/api/update-shoes/1', { value: 1, label: 'Sold' });
+    expect(wrapper.vm.editStatus).toBe(false);
+  });
+
+  it('fetches shoes when mounted', async () => {
+    const api = new FetchAPI();
+    await wrapper.vm.$nextTick();
+    expect(api.get).toHaveBeenCalledWith('/api/get-shoes');
+    expect(wrapper.vm.shoes).toHaveLength(1);
+  });
+
+  it('deletes shoe on confirmation', async () => {
+    global.confirm = jest.fn(() => true); // Mock confirmation dialog
+    const api = new FetchAPI();
+    const shoeToDelete = { shoe_id: 1 };
+
+    await wrapper.vm.deleteShoes(shoeToDelete);
+
+    expect(api.delete).toHaveBeenCalledWith('/api/delete-shoe/1');
+    expect(api.get).toHaveBeenCalled(); // Ensure list refreshes
+  });
+
+  it('does not delete shoe if not confirmed', async () => {
+    global.confirm = jest.fn(() => false); // Mock confirmation dialog
+    const api = new FetchAPI();
+    const shoeToDelete = { shoe_id: 1 };
+
+    await wrapper.vm.deleteShoes(shoeToDelete);
+
+    expect(api.delete).not.toHaveBeenCalled();
+  });
+});
+
+----
+
+
