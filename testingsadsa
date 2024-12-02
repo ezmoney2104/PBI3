@@ -1,0 +1,1071 @@
+from flask import Blueprint, request, jsonify
+import traceback
+
+
+# Import db
+from src.setup_db_example.models.m_puppy_model import PuppyModel
+from src.setup_db_example.schemas.s_puppy_schema import PuppySchema
+from src.setup_db_example.models.m_adopt_model import AdoptModel
+from src.setup_db_example.schemas.s_adopt_schema import AdoptSchema
+from src.setup_db_example.database import db
+
+from pprint import pprint
+
+# Add routing
+puppy_api_router = Blueprint("puppy_api", __name__)
+
+
+# Function to validate puppy data
+
+
+def validate_puppy_data(data):
+    """Function tot validate the data inputed by user
+
+    Args:
+        data (dict): _description_
+
+    Returns:
+        boolean: return true if data is valid or false if no data
+    """
+    required_fields = ["name", "breed", "birthdate", "gender", "description"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return False, f"Field '{field}' is required and cannot be null."
+
+    return True, "Valid data."
+
+
+@puppy_api_router.route("/api/get-puppies", methods=["GET"])
+def get_puppies():
+    """Get all the puppies
+
+    Returns:
+        dict: return the api response
+    """
+
+    try:
+        # get puppy info
+        query = PuppyModel.query.all()
+        puppy_list_info = PuppySchema(many=True).dump(query)
+
+        # get all adopted info of puppy
+        adopt_query = AdoptModel.query.all()
+        adopt_list = AdoptSchema(many=True).dump(adopt_query)
+
+        list_of_adopted_id = []
+        for instance in adopt_list:
+            list_of_adopted_id.append(instance["puppy_info"]["puppy_id"])
+
+        non_adopted_puppies = []
+
+        for values in puppy_list_info:
+            if values["puppy_id"] not in list_of_adopted_id:
+                non_adopted_puppies.append(values)
+
+        return {
+            "success": True,
+            "message_response": "PUPPY IS FETCHED SUCCESSFULLY",
+            "message_content": "Puppy is fetched Successfully",
+            "data": non_adopted_puppies,
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+
+
+@puppy_api_router.route("/api/post-puppy", methods=["POST"])
+def register_puppy():
+    """Add new puppy to the puppy_tbl
+
+    Returns:
+        dict: return the api response
+    """
+
+    try:
+        req = request.json["params"]
+        is_valid, message = validate_puppy_data(req)
+        if not is_valid:
+            return {"success": False, "message": message}, 400
+
+        new_puppy = PuppyModel(
+            puppy_name=req["name"],
+            puppy_breed=req["breed"],
+            puppy_birthdate=req["birthdate"],
+            puppy_gender=req["gender"],
+            puppy_description=req["description"],
+        )
+        db.session.add(new_puppy)
+        db.session.commit()
+        return {"success": True, "message": "Puppy added successfully"}, 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"success": False, "message": "Failed to add puppy"}, 500
+
+
+@puppy_api_router.route("/api/delete-puppy/<int:puppy_id>", methods=["DELETE"])
+def delete_puppy(puppy_id):
+    """Delete specific puppy on the data on the puppy_tbl
+
+    Args:
+        puppy_id (int): reference for the puppy id
+
+    Returns:
+        dict: return the api response
+    """
+
+    try:
+        puppy = PuppyModel.query.get_or_404(puppy_id)
+        db.session.delete(puppy)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Puppy deleted successfully"})
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"success": False, "message": "Failed to delete puppy"}), 500
+
+
+@puppy_api_router.route("/api/update-puppy/<int:puppy_id>", methods=["PUT"])
+def update_puppy(puppy_id):
+    """Edit specific puppy on the data on the puppy_tbl
+
+    Args:
+        puppy_id (int): reference for the puppy id
+
+    Returns:
+        dict: return the api response
+    """
+
+    try:
+
+        req = request.json["params"]
+
+        # Validate input data
+
+        # Fetch the puppy
+        name = req.get("name")
+        breed = req.get("breed")
+        description = req.get("description")
+
+        puppy = PuppyModel.query.get(puppy_id)
+        puppy.puppy_name = name
+        puppy.puppy_breed = breed
+        puppy.puppy_description = description
+
+        db.session.commit()
+        return {"success": True, "message": "Puppy updated successfully"}, 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"success": False, "message": "Failed to update puppy"}, 500
+
+
+
+
+----------
+
+
+from flask import Blueprint, request
+
+
+# Import db
+from src.setup_db_example.models.m_owner_model import OwnerModel
+from src.setup_db_example.schemas.s_owner_schema import OwnerSchema
+from src.setup_db_example.database import db
+import traceback
+
+# Add routing
+owner_api_router = Blueprint("owner_api", __name__)
+
+
+def validate_owner_data(data):
+    """Function tot validate the data inputed by user
+
+    Args:
+        data (dict): _description_
+
+    Returns:
+        boolean: return true if data is valid or false if no data
+    """
+    required_fields = ["name", "contact_info", "address"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return False, f"Field '{field}' is required and cannot be null."
+    return True, "Valid data"
+
+
+# Add routing name for api method
+@owner_api_router.route("/api/post-owners", methods=["POST"])
+def add_owner():
+    """Add new owner to the owner_tbl
+
+    Returns:
+        dict: return the api response
+    """
+    try:
+        req = request.json["params"]
+
+        is_valid, message = validate_owner_data(req)
+        if not is_valid:
+            return {"success": False, "message": message}, 400
+
+        new_owner = OwnerModel(
+            owner_name=req["name"],
+            owner_contact=req["contact_info"],
+            owner_address=req["address"],
+        )
+
+        db.session.add(new_owner)
+        db.session.commit()
+        return {"success": True, "message": "Owner added successfully"}, 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"success": False, "message": "Failed to add owner"}, 500
+
+
+@owner_api_router.route("/api/get-owners", methods=["GET"])
+def get_owners():
+    """Get all the owners
+
+    Returns:
+        dict: return the api response
+    """
+    try:
+        query = OwnerModel.query.all()
+
+        response_list = OwnerSchema(many=True).dump(query)
+        return {
+            "success": True,
+            "message_response": "OWNER IS FETCHED SUCCESSFULLY",
+            "message_content": "Owner is fetched Successfully",
+            "data": response_list,
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+
+
+------------------
+
+
+
+from flask import Blueprint, request
+from src.setup_db_example.database import db
+import traceback
+
+# Import db
+from src.setup_db_example.models.m_adopt_model import AdoptModel
+from src.setup_db_example.schemas.s_adopt_schema import AdoptSchema
+
+# Add routing
+adopt_api_router = Blueprint("adopt_api", __name__)
+
+
+# Add routing name for api method
+@adopt_api_router.route("/api/post-adopt", methods=["POST"])
+def adopt_puppy():
+    """Add new owner, puppy, and date data to the adopt_tbl
+
+    Returns:
+        dict: return the api response
+    """
+    try:
+        req = request.json["params"]
+
+        new_adopt = AdoptModel(
+            adopter_id=req["adopter_id"],
+            puppy_tbl_id=req["puppy_tbl_id"],
+            adopt_date=req["adopt_date"],
+        )
+        db.session.add(new_adopt)
+        db.session.commit()
+        return {"success": True, "message": "Adopt added successfully"}, 200
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"success": False, "message": "Failed to add adoption"}, 500
+
+
+@adopt_api_router.route("/api/get-adopt", methods=["GET"])
+def get_puppies():
+    """Get all the owners, puppy and date in the adopt_tbl
+
+    Returns:
+        dict: return the api response
+    """
+    try:
+        query = AdoptModel.query.all()
+
+        response_list = AdoptSchema(many=True).dump(query)
+
+        return {
+            "success": True,
+            "message_response": "ADOPT IS FETCHED SUCCESSFULLY",
+            "message_content": "Adopt is fetched Successfully",
+            "data": response_list,
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+
+
+
+----------
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <div>
+      <puppy-dashboard @puppyDash="fetchPuppies"></puppy-dashboard>
+      <h2 class="text-center mb-4">Manage Puppies</h2>
+      <bRow>
+        <bCol>
+          <div class="d-grid gap-2">
+            <b-button
+              variant="info"
+              @click="(showPuppyForm = !showPuppyForm), (showOwnerForm = false)"
+              >Add Puppy</b-button
+            >
+          </div>
+        </bCol>
+        <bCol>
+          <div class="d-grid gap-2">
+            <b-button
+              variant="info"
+              @click="(showOwnerForm = !showOwnerForm), (showPuppyForm = false)"
+              >Register Owner</b-button
+            >
+          </div>
+        </bCol>
+      </bRow>
+      <PuppyForm
+        v-show="showPuppyForm"
+        @puppyAdded="fetchPuppies"
+        @puppyUpdated="fetchPuppies"
+        :editingPuppy="selectedPuppy"
+      />
+      <b-table
+        class="table mx-auto my-4 w-75 text-break"
+        striped
+        hover
+        :items="puppies"
+        :fields="fields"
+      >
+        <template #cell(puppy_gender)="data">
+          <span>{{ data.item.puppy_gender === 1 ? 'Male' : 'Female' }}</span>
+        </template>
+        <template #cell(puppy_birthdate)="data">
+          <span>{{ calculateAge(data.item.puppy_birthdate) }}</span>
+        </template>
+
+        <template #cell(adopted_by)="data">
+          <span>{{ data.item.owner_name || 'Not Adopted' }}</span>
+        </template>
+
+        <template #cell(action)="data">
+          <b-button-group>
+            <b-button variant="success" @click="adoptPuppy(data.item)">Adopt</b-button>
+            <b-button @click="editPuppy(data.item)">Edit</b-button>
+            <b-button variant="danger" @click="deletePuppy(data.item)">Delete</b-button>
+          </b-button-group>
+        </template>
+      </b-table>
+
+      <owner-form v-show="showOwnerForm"></owner-form>
+    </div>
+
+    <b-modal
+      v-model="editForm"
+      title="Edit Puppy"
+      header-bg-variant="info"
+      header-text-variant="dark"
+      no-close-on-backdrop
+      hide-footer
+      centered
+      @close="resetPuppyEdit"
+    >
+      <b-form @submit.prevent="updatePuppy">
+        <b-form-group label="Puppy Name" label-for="puppy-name">
+          <b-form-input
+            id="puppy-name"
+            v-model="editPuppyDetails.name"
+            placeholder="Enter Puppy Name"
+            maxlength="20"
+            required
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-group label="Breed" label-for="puppy-breed">
+          <b-form-input
+            id="puppy-breed"
+            v-model="editPuppyDetails.breed"
+            placeholder="Enter Puppy Breed"
+            maxlength="20"
+            required
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-group label="Description" label-for="puppy-description" class="mb-3">
+          <b-form-input
+            id="puppy-description"
+            v-model="editPuppyDetails.description"
+            placeholder="Enter Puppy Description"
+            maxlength="64"
+            required
+          >
+          </b-form-input>
+        </b-form-group>
+
+        <b-button type="submit" variant="primary">Edit Puppy</b-button>
+      </b-form>
+    </b-modal>
+  </b-container>
+</template>
+
+<script>
+import PuppyForm from './PuppyForm.vue'
+import OwnerForm from './OwnerForm.vue'
+import { FetchAPI } from '@/utils/apiRequest'
+import PuppyDashboard from './PuppyDashboard.vue'
+
+export default {
+  name: 'ManagePuppies',
+  components: { PuppyForm, OwnerForm, PuppyDashboard },
+  data() {
+    return {
+      puppies: [],
+      fields: [
+        { key: 'puppy_name', label: 'Name' },
+        { key: 'puppy_birthdate', label: 'Age' },
+        { key: 'puppy_breed', label: 'Breed' },
+        { key: 'puppy_gender', label: 'Gender' },
+        { key: 'puppy_description', label: 'Description' },
+
+        { key: 'action', label: 'Action' }
+      ],
+      showPuppyForm: false,
+      showOwnerForm: false,
+      selectedPuppy: null,
+      editPuppyDetails: {
+        name: '',
+        breed: '',
+        description: ''
+      },
+      editForm: false,
+      puppyAge: ''
+    }
+  },
+
+  mounted() {
+    this.fetchPuppies()
+  },
+
+  methods: {
+    /**
+     * Function calculate and return age of puppy
+     * @param {string} birthday - Parameter to get birthday
+     */
+
+    calculateAge(birthday) {
+      return new Date(new Date() - new Date(birthday)).getFullYear() - 1970
+    },
+    /**
+     * Functio to get the puppy_id and and assign it to selectedPuppy and toggle the edit form which is used in the v-model for editing puppy
+     * @param {number} puppy_id - parameter for puppy id
+     */
+    editPuppy(puppy_id) {
+      this.editForm = !this.editForm
+      this.selectedPuppy = puppy_id
+    },
+
+    /**
+     * Function to get the puppies in the database table of puppy_tbl
+     */
+
+    async fetchPuppies() {
+      const api = new FetchAPI()
+      const response = await api.get('/api/get-puppies')
+      if (response.success) this.puppies = [...response.data]
+    },
+
+    /**
+     * Function to delete puppy using puppy_id
+     * @param {number} puppy - parameter for puppy_id
+     */
+    async deletePuppy(puppy) {
+      const confirmed = confirm('Are you sure you want to delete?')
+      if (confirmed) {
+        const api = new FetchAPI()
+        await api.delete(`/api/delete-puppy/${puppy.puppy_id}`)
+        this.fetchPuppies()
+      }
+    },
+
+    /**
+     * Function to add owner and puppy details in the adopt_tbl
+     * @param {number} puppy - parameter puppy_id
+     */
+
+    async adoptPuppy(puppy) {
+      this.showOwnerForm = true
+      const ownerId = prompt('Enter Owner ID for adoption:')
+      if (ownerId) {
+        const api = new FetchAPI()
+        const response = await api.post('/api/post-adopt', {
+          adopter_id: ownerId,
+          puppy_tbl_id: puppy.puppy_id,
+          adopt_date: new Date().toISOString().split('T')[0]
+        })
+        if (response.success) {
+          alert('Puppy Adopted Successfully')
+          this.fetchPuppies()
+        } else {
+          alert('Failed to Adopt Puppy')
+        }
+      }
+    },
+
+    /**
+     * Function to update the chosen puppy
+     */
+
+    async updatePuppy() {
+      const puppyEdit = this.editPuppyDetails
+      const regex = /^[A-Za-z]+$/
+      const validation =
+        puppyEdit.name.trim() === '' ||
+        puppyEdit.breed.trim() === '' ||
+        puppyEdit.description.trim() === ''
+      const regexValidation =
+        !regex.test(puppyEdit.name) ||
+        !regex.test(puppyEdit.breed) ||
+        !regex.test(puppyEdit.description)
+      if (validation || regexValidation) {
+        alert('Please input only letters no special character, and spaces')
+        return
+      }
+
+      try {
+        const api = new FetchAPI()
+        const response = await api.put(
+          `/api/update-puppy/${this.selectedPuppy.puppy_id}`,
+          this.editPuppyDetails
+        )
+        if (response.success) {
+          this.$emit('puppyUpdated')
+          this.fetchPuppies()
+          this.resetPuppyEdit()
+          this.editPuppy()
+          alert('Puppy Updated Successfully')
+        } else {
+          alert('Failed to Update Puppy')
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    },
+
+    /**
+     * Function to reset modal edit puppy form
+     */
+
+    resetPuppyEdit() {
+      const editPuppyForm = this.editPuppyDetails
+      editPuppyForm.name = ''
+      editPuppyForm.breed = ''
+      editPuppyForm.description = ''
+    }
+  }
+}
+</script>
+
+
+------------
+
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <h1>Register Owner</h1>
+    <b-form @submit.prevent="submitOwner">
+      <b-form-group label="Name:">
+        <b-form-input
+          maxLength="20"
+          minLength="1"
+          v-model="owner.name"
+          placeholder="Enter name"
+          required
+          @keypress="validateInput"
+        ></b-form-input>
+      </b-form-group>
+
+      <b-form-group label="Number:">
+        <b-input-group prepend="+63" class="mt-3">
+          <b-form-input
+            v-model="owner.contact_info"
+            placeholder="Enter contact info"
+            required
+            type="number"
+            maxlength="10"
+            minLength="0"
+            @keydown="validateNumber"
+          ></b-form-input>
+        </b-input-group>
+      </b-form-group>
+
+      <b-form-group label="Address:">
+        <b-form-input
+          maxLength="64"
+          minLength="1"
+          v-model="owner.address"
+          placeholder="Enter address"
+          required
+          @keypress="validateInput"
+        ></b-form-input>
+      </b-form-group>
+      <b-button type="submit" class="mt-2">Add Owner</b-button>
+    </b-form>
+
+    <b-table striped hover :items="owners" :fields="fields"> </b-table>
+  </b-container>
+</template>
+
+<script>
+import { FetchAPI } from '@/utils/apiRequest'
+
+export default {
+  name: 'OwnerForm',
+  data() {
+    return {
+      owners: [],
+      owner: {
+        name: '',
+        contact_info: '',
+        address: ''
+      },
+      fields: [
+        { key: 'owner_id', label: 'ID' },
+        { key: 'owner_name', label: 'Name' },
+        { key: 'owner_contact', label: 'Contact' },
+        { key: 'owner_address', label: 'Address' }
+      ],
+      isError: false
+    }
+  },
+  methods: {
+    /**
+     * Function to only allow user to enter a-z characters in fhe form
+     * @param {number} event - paramter to get key entered by user
+     */
+
+    validateInput(event) {
+      const char = String.fromCharCode(event.keyCode)
+      const isLetter = /^[a-zA-Z]$/.test(char)
+      if (!isLetter) {
+        event.preventDefault()
+      }
+    },
+
+    /**
+     * Function to only allow 0-9 number in fhe form and allow certain keys for the form to te pressed
+     * @param {number} event - paramter to get key entered by user
+     */
+
+    validateNumber(event) {
+      const value = event.target.value
+      const char = String.fromCharCode(event.keyCode)
+
+      const controlKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab']
+      if (controlKeys.includes(event.key)) {
+        return
+      }
+
+      const isNumber = /^[0-9]$/.test(char)
+      if (!isNumber || value.length >= 10) {
+        event.preventDefault()
+      }
+    },
+
+    /**
+     * Function to check validity of owner form
+     */
+
+    checkValidity() {
+      const numberPattern = /^(9)\d{9}$/
+      const namePattern = /^[A-Za-z\s]+$/
+      const validators = [
+        {
+          condition: () => !numberPattern.test(this.owner.contact_info),
+          message: 'Invalid Phone Number Format. Ex: 9123456789',
+          action: () => (this.owner.contact_info = '')
+        },
+        {
+          condition: () =>
+            this.owner.name.trim() === '' ||
+            !namePattern.test(this.owner.name) ||
+            this.owner.name.length > 20,
+          message: 'Owner name must be all letters and no blank',
+          action: () => (this.owner.name = '')
+        },
+        {
+          condition: () =>
+            this.owner.address.trim() === '' ||
+            !namePattern.test(this.owner.address) ||
+            this.owner.address.length > 20,
+          message: 'Owner address must be all letters and no blank',
+          action: () => (this.owner.address = '')
+        }
+      ]
+      for (const validator of validators) {
+        if (validator.condition()) {
+          alert(validator.message)
+          if (validator.action) validator.action()
+          this.isError = true
+          return
+        }
+      }
+
+      this.isError = false
+    },
+
+    /**
+     * Function to add data to the owner table in the database
+     */
+
+    async submitOwner() {
+      try {
+        this.checkValidity()
+        const api = new FetchAPI()
+        const response = await api.post('/api/post-owners', this.owner)
+        if (response.success) {
+          this.$emit('ownerAdded')
+          alert('Owner Added Successfully')
+          this.owner = { name: '', contact_info: '', address: '' }
+          this.fetchOwners()
+        } else {
+          alert('Failed to Add Owner')
+        }
+      } catch (err) {
+        console.log(err)
+        alert('An error occurred')
+      }
+    },
+
+    /**
+     * Function to get the data in the owners table
+     */
+
+    async fetchOwners() {
+      try {
+        const api = new FetchAPI()
+        const response = await api.get('/api/get-owners')
+        if (response.success) {
+          this.owners = [...response.data]
+        } else {
+          alert('Failed to fetch owners')
+        }
+      } catch (err) {
+        console.log(err)
+        alert('An error occured while fetching owners')
+      }
+    }
+  },
+
+  mounted() {
+    this.fetchOwners()
+  }
+}
+</script>
+
+
+------------------
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <h1>Puppy Adoption Dashboard</h1>
+    <b-row>
+      <b-col cols="4">
+        <b-card title="Total Puppies" class="text-center">
+          <h2>{{ totalPuppies }}</h2>
+        </b-card>
+      </b-col>
+      <b-col cols="4">
+        <b-card title="Total Owners" class="text-center">
+          <h2>{{ totalOwners }}</h2>
+        </b-card>
+      </b-col>
+      <b-col cols="4">
+        <b-card title="Total Adoptions" class="text-center">
+          <h2>{{ totalAdoptions }}</h2>
+        </b-card>
+      </b-col>
+    </b-row>
+  </b-container>
+</template>
+
+<script>
+import { FetchAPI } from '@/utils/apiRequest'
+
+export default {
+  name: 'Dashboard',
+  data() {
+    return {
+      totalPuppies: 0,
+      totalOwners: 0,
+      totalAdoptions: 0
+    }
+  },
+
+  methods: {
+    /**
+     * Function to get the data in the puppies, owners, and adopt table and get the lenght of each table
+     */
+
+    async fetchSummary() {
+      const api = new FetchAPI()
+      const puppies = await api.get('/api/get-puppies')
+      const owners = await api.get('/api/get-owners')
+      const adoptions = await api.get('/api/get-adopt')
+
+      if (puppies.success) this.totalPuppies = puppies.data.length
+      if (owners.success) this.totalOwners = owners.data.length
+      if (adoptions.success) this.totalAdoptions = adoptions.data.length
+
+      this.$emit('puppyDash')
+    },
+
+    /**
+     * Function to setInterval and call the fetchSummary function to load the page automatically and update the data
+     */
+
+    startPolling() {
+      this.fetchSummary()
+      this.pollingInterval = setInterval(this.fetchSummary, 1000) // Poll every 5 seconds
+    },
+
+    /**
+     * Function to clear the interval
+     */
+    stopPolling() {
+      clearInterval(this.pollingInterval)
+    }
+  },
+  mounted() {
+    this.fetchSummary()
+    this.startPolling()
+  },
+  beforeDestroy() {
+    this.stopPolling()
+  }
+}
+</script>
+
+<style scoped>
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+</style>
+
+------------
+
+
+<template>
+  <b-container fluid class="mx-auto my-4 w-75">
+    <h1>Register Puppy</h1>
+    <b-form @submit.prevent="validateAndSubmit">
+      <b-form-group label="Name:">
+        <b-form-input
+          maxLength="20"
+          minLength="1"
+          v-model="puppy.name"
+          placeholder="Enter name"
+          required
+          @keypress="validateInput"
+        ></b-form-input>
+        <div v-if="errors.name" class="text-danger">{{ errors.name }}</div>
+      </b-form-group>
+
+      <b-form-group label="Breed:">
+        <b-form-input
+          maxLength="20"
+          minLength="1"
+          v-model="puppy.breed"
+          placeholder="Enter breed"
+          required
+          @keypress="validateInput"
+        ></b-form-input>
+        <div v-if="errors.breed" class="text-danger">{{ errors.breed }}</div>
+      </b-form-group>
+
+      <b-form-group label="Birthdate:">
+        <b-form-input
+          v-model="puppy.birthdate"
+          type="date"
+          placeholder="Enter birthdate"
+          required
+          max="2024-12-02"
+        ></b-form-input>
+      </b-form-group>
+
+      <b-form-group label="Gender:">
+        <b-form-select v-model="puppy.gender" :options="options"></b-form-select>
+      </b-form-group>
+
+      <b-form-group label="Description:">
+        <b-form-textarea
+          id="textarea"
+          v-model="puppy.description"
+          placeholder="Enter puppy description..."
+          rows="3"
+          max-rows="6"
+          maxLength="64"
+          minLength="2"
+          required
+        ></b-form-textarea>
+        <div v-if="errors.description" class="text-danger">{{ errors.description }}</div>
+      </b-form-group>
+
+      <b-button class="mt-2" type="submit"> Add Puppy</b-button>
+    </b-form>
+  </b-container>
+</template>
+
+<script>
+import { FetchAPI } from '@/utils/apiRequest'
+
+export default {
+  name: 'PuppyForm',
+  props: ['editingPuppy'], // Receive puppy data for editing
+  data() {
+    return {
+      puppy: {
+        name: '',
+        breed: '',
+        birthdate: '',
+        gender: null,
+        description: ''
+      },
+      editPuppy: {
+        name: '',
+        breed: '',
+        description: ''
+      },
+
+      options: [
+        { value: null, text: 'Choose Gender', disabled: true },
+        { value: 1, text: 'Male' },
+        { value: 2, text: 'Female' }
+      ],
+
+      errors: {},
+      isError: false,
+      editForm: false
+    }
+  },
+  methods: {
+    /**
+     * Function to check validity of puppy form
+     */
+
+    checkValidity() {
+      const namePattern = /^[A-Za-z\s]+$/
+      const validators = [
+        {
+          condition: () =>
+            this.puppy.name.trim() === '' ||
+            !namePattern.test(this.puppy.name) ||
+            this.puppy.name.length > 20,
+          message: 'Puppy name must be all letters and no blank',
+          action: () => (this.puppy.name = '')
+        },
+        {
+          condition: () =>
+            this.puppy.breed.trim() === '' ||
+            !namePattern.test(this.puppy.breed) ||
+            this.puppy.breed.length > 20,
+          message: 'Puppy breed must be all letters and no blank',
+          action: () => (this.puppy.breed = '')
+        },
+        {
+          condition: () =>
+            this.puppy.description.trim() === '' || this.puppy.description.length > 64,
+          message: 'Puppy address must be all letters and no blank',
+          action: () => (this.puppy.description = '')
+        }
+      ]
+      for (const validator of validators) {
+        if (validator.condition()) {
+          alert(validator.message)
+          if (validator.action) validator.action()
+          this.isError = true
+          return
+        }
+      }
+
+      this.isError = false
+    },
+
+    /**
+     * Function to only allow user to enter a-z characters in fhe form
+     * @param {number} event - paramter to get key entered by user
+     */
+
+    validateInput(event) {
+      const char = String.fromCharCode(event.keyCode)
+      const isLetter = /^[a-zA-Z]$/.test(char)
+      if (!isLetter) {
+        event.preventDefault()
+      }
+    },
+
+    /**
+     * Function to validate forms and not allowing spaces to be entered
+     */
+
+    validateAndSubmit() {
+      this.checkValidity()
+      this.errors = {}
+
+      if (!this.puppy.name.trim()) {
+        this.errors.name = 'Name cannot be empty or contain only spaces.'
+      }
+      if (!this.puppy.breed.trim()) {
+        this.errors.breed = 'Breed cannot be empty or contain only spaces.'
+      }
+      if (!this.puppy.description.trim()) {
+        this.errors.description = 'Description cannot be empty or contain only spaces.'
+      }
+
+      if (Object.keys(this.errors).length === 0) {
+        this.addPuppy()
+      }
+    },
+
+    /**
+     * Function to add puppy in the puppy table database
+     */
+
+    async addPuppy() {
+      try {
+        const api = new FetchAPI()
+        const response = await api.post('/api/post-puppy', this.puppy)
+        if (response.success) {
+          this.$emit('puppyAdded')
+          this.resetForm()
+          alert('Puppy Added Successfully')
+        } else {
+          alert('Failed to Add Puppy')
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    },
+
+    /**
+     * Function to reset the puppy form
+     */
+
+    resetForm() {
+      this.puppy = {
+        name: '',
+        breed: '',
+        birthdate: '',
+        gender: null,
+        description: ''
+      }
+    }
+  }
+}
+</script>
+
