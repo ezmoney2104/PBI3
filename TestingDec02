@@ -301,5 +301,125 @@ describe('ListShoes.vue', () => {
 });
 
 ----
+  
+import { shallowMount } from '@vue/test-utils';
+import MainShoes from '@/components/MainShoes.vue';
+import CommonTextInput from '@/components/common/CommonTextInput.vue';
+import CommonTextArea from '@/components/common/CommonTextArea.vue';
+import CommonButton from '@/components/common/CommonButton.vue';
+import { FetchAPI } from '@/utils/apiRequest';
 
+jest.mock('@/utils/apiRequest', () => ({
+  FetchAPI: jest.fn().mockImplementation(() => ({
+    post: jest.fn().mockResolvedValue({ success: true }),
+  })),
+}));
 
+describe('MainShoes.vue', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    wrapper = shallowMount(MainShoes, {
+      stubs: {
+        'b-container': { template: '<div><slot></slot></div>' },
+        'b-card': { template: '<div><slot></slot></div>' },
+        'b-form': { template: '<form @submit.prevent="$emit(\'submit\')"><slot></slot></form>' },
+      },
+      components: { CommonTextInput, CommonTextArea, CommonButton },
+    });
+  });
+
+  afterEach(() => {
+    wrapper.destroy();
+  });
+
+  it('renders the form with components', () => {
+    expect(wrapper.findAllComponents(CommonTextInput).length).toBeGreaterThan(0);
+    expect(wrapper.findAllComponents(CommonTextArea).length).toBeGreaterThan(0);
+    expect(wrapper.findAllComponents(CommonButton).length).toBeGreaterThan(0);
+  });
+
+  it('assigns data to formShoes using addShoeData', () => {
+    wrapper.vm.addShoeData({ key: 'brand', value: 'Nike' });
+    expect(wrapper.vm.formShoes.brand).toBe('Nike');
+
+    wrapper.vm.addShoeData({ key: 'price', value: 100 });
+    expect(wrapper.vm.formShoes.price).toBe(100);
+  });
+
+  it('validates the form correctly', () => {
+    wrapper.vm.formShoes = {
+      brand: 'Nike',
+      name: 'AirMax',
+      price: 120,
+      description: 'Great shoes',
+    };
+
+    expect(wrapper.vm.checkValidity()).toBe(true);
+
+    wrapper.vm.formShoes.name = '';
+    expect(wrapper.vm.checkValidity()).toBe(false);
+  });
+
+  it('calls submitShoes on form submission if valid', async () => {
+    const api = new FetchAPI();
+    wrapper.vm.formShoes = {
+      brand: 'Nike',
+      name: 'AirMax',
+      price: 120,
+      description: 'Great shoes',
+    };
+
+    wrapper.vm.formAddHandling();
+
+    expect(api.post).toHaveBeenCalledWith('/api/post-shoes', {
+      brand: 'Nike',
+      name: 'AirMax',
+      price: 120,
+      description: 'Great shoes',
+    });
+
+    expect(wrapper.emitted('shoeAdded')).toBeTruthy();
+  });
+
+  it('resets form after successful submission', async () => {
+    wrapper.vm.formShoes = {
+      brand: 'Nike',
+      name: 'AirMax',
+      price: 120,
+      description: 'Great shoes',
+    };
+
+    await wrapper.vm.submitShoes();
+
+    expect(wrapper.vm.formShoes).toEqual({
+      brand: '',
+      name: '',
+      price: '',
+      description: '',
+    });
+    expect(wrapper.vm.resetShoeId).toBe(1); // Reset ID increments
+  });
+
+  it('displays errors when validation fails', () => {
+    global.alert = jest.fn();
+    wrapper.vm.formShoes = {
+      brand: '',
+      name: '',
+      price: '',
+      description: '',
+    };
+
+    expect(wrapper.vm.checkValidity()).toBe(false);
+    expect(global.alert).toHaveBeenCalledWith(
+      'Brand must not be greater than 10 characters or should not be blank'
+    );
+  });
+
+  it('calls eventHandler with "Submit" and triggers formAddHandling', () => {
+    const formAddHandlingSpy = jest.spyOn(wrapper.vm, 'formAddHandling');
+    wrapper.vm.eventHandler('Submit');
+
+    expect(formAddHandlingSpy).toHaveBeenCalled();
+  });
+});
