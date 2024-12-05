@@ -80,3 +80,22 @@ The user can recognize the line name and the date and time displayed on the scre
   - Python / Flask: Pytest
 - Create Necessary Diagrams: Component Diagram, ERD Diagram, Dataset Diagram and Class Diagram
 - Apply JSDoc and Docstring in code for documentation
+
+# Columns DB
+
+■ 稼働情報テーブル（工程ごとにデータを持つ）
+Operation information table
+(Each processes have data.)
+
+- Process name(character String)
+- Operation information
+  (In operation / abnormal stop / preparation)
+- Product number
+- CT Facility cycle time
+- Number of non-defective products
+- 不良品数 Number of defective products
+- 異常発生日時 Date and time of abnormality
+- 異常内容（文字列）Abnormal content (character string)
+- 段取り・補給予告発生日時　 Setup/Date and time of setup / replenishment notice
+- 段取り・補給予告（文字列）Setup / replenishment notice (character string)
+- 座標（X,Y,W,H）　 Coordinates (X, Y, W, H)
