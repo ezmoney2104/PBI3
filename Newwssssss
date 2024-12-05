@@ -1,0 +1,142 @@
+To build your website with the specified requirements, follow these steps:
+
+Frontend (Vue.js)
+
+1. Create the Layout
+
+	•	Create a Vue component (e.g., Header.vue) for the header displaying the line name, date, and time.
+
+<template>
+  <header class="header">
+    <div class="line-name">GPS ミリ波 1 号ライン</div>
+    <div class="date-time">{{ formattedDate }}</div>
+  </header>
+</template>
+
+<script>
+export default {
+  name: "Header",
+  data() {
+    return {
+      currentDate: new Date(),
+    };
+  },
+  computed: {
+    formattedDate() {
+      return this.currentDate.toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    },
+  },
+  mounted() {
+    this.interval = setInterval(() => {
+      this.currentDate = new Date();
+    }, 1000);
+  },
+  beforeUnmount() {
+    clearInterval(this.interval);
+  },
+};
+</script>
+
+<style scoped>
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  font-size: 18px;
+  background-color: #f5f5f5;
+}
+</style>
+
+2. Write Unit Tests with Jest
+
+	•	Write a Jest test for the Header.vue component using shallowMount.
+
+import { shallowMount } from "@vue/test-utils";
+import Header from "@/components/Header.vue";
+
+describe("Header.vue", () => {
+  it("displays the correct line name", () => {
+    const wrapper = shallowMount(Header);
+    expect(wrapper.find(".line-name").text()).toBe("GPS ミリ波 1 号ライン");
+  });
+
+  it("updates the date and time in real-time", () => {
+    jest.useFakeTimers();
+    const wrapper = shallowMount(Header);
+    const initialTime = wrapper.vm.formattedDate;
+
+    jest.advanceTimersByTime(1000);
+    expect(wrapper.vm.formattedDate).not.toBe(initialTime);
+
+    jest.useRealTimers();
+  });
+});
+
+Backend (Flask)
+
+1. Create Flask App
+
+	•	Create a simple Flask app to serve your Vue.js app and any backend logic.
+
+from flask import Flask, jsonify
+from datetime import datetime
+
+app = Flask(__name__)
+
+@app.route("/api/current_time", methods=["GET"])
+def get_current_time():
+    now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    return jsonify({"current_time": now})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+2. Write Unit Tests with Pytest
+
+	•	Use Pytest to test the Flask route.
+
+import pytest
+from app import app
+
+@pytest.fixture
+def client():
+    with app.test_client() as client:
+        yield client
+
+def test_get_current_time(client):
+    response = client.get("/api/current_time")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "current_time" in data
+
+Integration
+
+	1.	Serve the Vue.js app and make an API call to the Flask backend to fetch the date/time if needed.
+	2.	Use axios or fetch in your Vue.js app for API calls.
+
+Push to Git
+
+	1.	Initialize a Git repository in your project folder.
+	2.	Add and commit your code:
+
+git init
+git add .
+git commit -m "Initial commit for Vue.js + Flask project"
+
+
+	3.	Push to a Git remote (e.g., GitHub):
+
+git remote add origin <your-repository-url>
+git push -u origin main
+
+
+
+Let me know if you need help with any specific part of this!
